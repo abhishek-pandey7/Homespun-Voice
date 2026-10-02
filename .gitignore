@@ -1,0 +1,62 @@
+# --- secrets ---
+.env
+.env.*
+!.env.example
+
+# --- audio and datasets ---
+# Source recordings and derived chunks stay local. Provenance lives in the
+# manifests, which are tracked; the audio itself is not redistributed.
+data/**
+# Directories must be re-included first, or git never descends into them and
+# every negation below is silently dead.
+!data/**/
+!data/**/.gitkeep
+!data/gold/DATASET_CARD.md
+!data/raw/manifest.jsonl
+!data/chunks/manifest.jsonl
+!data/story/narration_manifest.json
+
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+*.opus
+
+# --- model weights and adapters ---
+models/**
+!models/.gitkeep
+*.safetensors
+*.bin
+*.ckpt
+*.pt
+*.pth
+
+# --- generated narration ---
+web/assets/audio/**
+!web/assets/audio/.gitkeep
+
+# --- reports: keep written reports, drop raw run dumps ---
+reports/**
+!reports/.gitkeep
+!reports/benchmark.md
+!reports/train_log.jsonl
+
+# --- python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- os / editor ---
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

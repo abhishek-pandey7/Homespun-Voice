@@ -1,0 +1,17 @@
+# Normalise text to LF in the repository regardless of the checkout platform.
+* text=auto eol=lf
+
+# Keep shell scripts LF even on Windows checkouts.
+*.sh text eol=lf
+
+# Never touch binary payloads.
+*.wav binary
+*.mp3 binary
+*.m4a binary
+*.flac binary
+*.safetensors binary
+*.bin binary
+*.pt binary
+
+# JSONL manifests are line-oriented; a clean diff per record is worth having.
+*.jsonl text eol=lf
