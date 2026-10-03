@@ -1,0 +1,220 @@
+:root {
+  --bg: #fbf9f5;
+  --surface: #ffffff;
+  --ink: #1c1917;
+  --ink-soft: #57534e;
+  --ink-faint: #8a8279;
+  --rule: #e3ddd3;
+  --accent: #8c3a1e;
+  --accent-soft: #f3e7e1;
+  --good: #2f6b43;
+  --bad: #9a3412;
+  --measure: 34rem;
+  --devanagari: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+  --latin: "Spectral", Georgia, "Times New Roman", serif;
+  --ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15130f;
+    --surface: #1e1b16;
+    --ink: #f0ece4;
+    --ink-soft: #bdb5a8;
+    --ink-faint: #8a8279;
+    --rule: #342f27;
+    --accent: #e89070;
+    --accent-soft: #2d211b;
+    --good: #7cc296;
+    --bad: #e89070;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15130f;
+  --surface: #1e1b16;
+  --ink: #f0ece4;
+  --ink-soft: #bdb5a8;
+  --ink-faint: #8a8279;
+  --rule: #342f27;
+  --accent: #e89070;
+  --accent-soft: #2d211b;
+  --good: #7cc296;
+  --bad: #e89070;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--latin);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: var(--measure); margin: 0 auto; padding: 0 16px; }
+
+/* ---------------------------------------------------------------- header --- */
+
+header.masthead {
+  border-bottom: 1px solid var(--rule);
+  padding: 4rem 0 2.5rem;
+  margin-bottom: 3rem;
+}
+.eyebrow {
+  font-family: var(--ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 1rem;
+}
+h1 {
+  font-size: clamp(2rem, 7vw, 2.9rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.75rem;
+  font-weight: 600;
+}
+.standfirst {
+  font-size: 1.15rem;
+  color: var(--ink-soft);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* --------------------------------------------------------------- chapters --- */
+
+.chapter { margin: 0 0 4.5rem; }
+.chapter-num {
+  font-family: var(--ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.4rem;
+}
+h2 {
+  font-size: 1.6rem;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+}
+.chapter-sub { color: var(--ink-soft); font-style: italic; margin: 0 0 1.5rem; }
+.intro { color: var(--ink-soft); margin: 0 0 2rem; }
+.bridge { color: var(--ink-soft); margin: 0 0 1.25rem; }
+
+.entry {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  border-radius: 2px;
+  padding: 1.25rem 1.25rem 1rem;
+  margin: 0 0 1.5rem;
+}
+
+/* Devanagari needs more vertical room than Latin at the same point size, or
+   the matras collide with the line above. */
+.quote {
+  font-family: var(--devanagari);
+  font-size: 1.22rem;
+  line-height: 2.05;
+  margin: 0 0 0.9rem;
+  text-wrap: pretty;
+}
+
+.entry-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--rule);
+  padding-top: 0.75rem;
+}
+.utt-id {
+  font-family: var(--ui);
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+}
+audio { height: 32px; max-width: 100%; flex: 1 1 200px; }
+
+/* ------------------------------------------------------------- comparison --- */
+
+.compare { border-top: 1px solid var(--rule); padding-top: 3rem; margin-top: 1rem; }
+
+table.metrics {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ui);
+  font-size: 0.86rem;
+  margin: 1.5rem 0 2rem;
+}
+table.metrics th, table.metrics td {
+  text-align: right;
+  padding: 0.5rem 0.4rem;
+  border-bottom: 1px solid var(--rule);
+}
+table.metrics th:first-child, table.metrics td:first-child { text-align: left; }
+table.metrics thead th { color: var(--ink-faint); font-weight: 500; }
+table.metrics tbody tr:last-child td { font-weight: 600; }
+.delta-good { color: var(--good); }
+.delta-bad { color: var(--bad); }
+
+.sample { margin: 0 0 2rem; }
+.sample h4 {
+  font-family: var(--ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.6rem;
+  font-weight: 500;
+}
+.line { display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.6rem; margin-bottom: 0.5rem; }
+.line .label {
+  font-family: var(--ui);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding-top: 0.45rem;
+}
+.line .text { font-family: var(--devanagari); line-height: 1.9; }
+.line.ref .text { color: var(--ink); }
+.line.base .text { color: var(--ink-soft); }
+.line.lora .text { color: var(--ink); background: var(--accent-soft); padding: 0 0.3rem; border-radius: 2px; }
+
+@media (max-width: 34rem) {
+  .line { grid-template-columns: 1fr; gap: 0.15rem; }
+  .line .label { padding-top: 0.4rem; }
+}
+
+/* ------------------------------------------------------------------ foot --- */
+
+footer {
+  border-top: 1px solid var(--rule);
+  margin-top: 4rem;
+  padding: 2rem 0 4rem;
+  font-family: var(--ui);
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  line-height: 1.7;
+}
+footer a { color: var(--accent); }
+footer p { margin: 0 0 0.75rem; }
+.cite {
+  font-size: 0.78rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.75rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.status { color: var(--ink-faint); font-family: var(--ui); font-size: 0.9rem; }

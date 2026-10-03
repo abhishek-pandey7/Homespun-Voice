@@ -37,6 +37,14 @@ models/**
 web/assets/audio/**
 !web/assets/audio/.gitkeep
 
+# --- story clips served by the deployed reader ---
+# Deliberately tracked. Render serves the static site straight from the repo,
+# so a clip that is not committed 404s in the browser. These are the handful of
+# utterances the storybook quotes, redistributed under the corpus's CC BY-NC-SA
+# licence with attribution and share-alike carried on the page itself.
+!web/assets/clips/
+!web/assets/clips/*.wav
+
 # --- reports: keep written reports, drop raw run dumps ---
 reports/**
 !reports/.gitkeep

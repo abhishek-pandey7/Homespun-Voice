@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vocalia</title>
+<meta name="description" content="Awadhi testimony on birth, marriage and mourning customs, with a speech model adapted to transcribe the dialect as spoken.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;600&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Awadhi &middot; Uttar Pradesh</p>
+    <h1 id="title">Vocalia</h1>
+    <p class="standfirst" id="subtitle">
+      Spoken testimony about birth, marriage and mourning customs &mdash; and a
+      speech model taught to write it down as it was actually said.
+    </p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="story">
+    <p class="status">Loading&hellip;</p>
+  </section>
+
+  <section class="compare" id="compare">
+    <p class="eyebrow">The measurement</p>
+    <h2>What the adapter changed</h2>
+    <p class="intro">
+      General speech models transcribe Awadhi by translating it into standard
+      Hindi, and on longer clips they stop transcribing altogether and repeat a
+      syllable until they run out of room. Both models below were decoded by the
+      same script with the same settings on the same held-out utterances. The
+      only difference is a 8.7&nbsp;MB adapter trained for 52 minutes on one
+      laptop GPU.
+    </p>
+    <div id="metrics"></div>
+    <div id="samples"></div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p id="provenance">
+      Quoted speech is the corpus's own human transcription, not model output.
+      Narration is generated. Nothing in a quotation has been corrected,
+      standardised or rewritten &mdash; a validator rejects the text if it has.
+    </p>
+    <p>
+      Corpus: <strong>SpeeD-IA Awadhi</strong>, collected by Dr.&nbsp;Bhimrao
+      Ambedkar University and the Council for Strategic and Defence Research with
+      Karya Inc. and UnReaL-TecE LLP.
+      <a href="https://github.com/unrealtecellp/SpeeD-IA">Source</a>.
+      Licensed <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>;
+      this work is a derivative and carries the same licence.
+    </p>
+    <pre class="cite">Kumar, R., Singh, S., Ratan, S., Raj, M., Sinha, S., Lahiri, B.,
+Seshadri, V., Bali, K., &amp; Ojha, A. Kr. (2022). Annotated Speech Corpus
+for Low Resource Indian Languages: Awadhi, Bhojpuri, Braj and Magahi.
+Speech for Social Good Workshop, Interspeech 2022.</pre>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
