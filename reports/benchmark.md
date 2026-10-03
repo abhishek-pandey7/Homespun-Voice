@@ -12,9 +12,21 @@ Normalisation applied identically to both sides: NFC; strip danda and punctuatio
 
 | metric | baseline | adapted | change |
 |---|---:|---:|---:|
-| WER | 1.0210 | **0.6967** | -0.3243 (-31.8%) |
-| CER | 0.6335 | **0.3960** | -0.2375 (-37.5%) |
-| dialect markers recalled | 36/709 (5.1%) | **288/709 (40.6%)** | +252 |
+| WER | 1.0210 | **0.6236** | -0.3974 (-38.9%) |
+| CER | 0.6335 | **0.3564** | -0.2771 (-43.7%) |
+| dialect markers recalled | 36/709 (5.1%) | **321/709 (45.3%)** | +285 |
+
+## Epoch ablation
+
+Identical data, seed and hyperparameters; only the epoch count differs.
+The longer schedule stretches warmup and decay, so the shorter run is
+already annealing where the longer one is still learning.
+
+| run | WER | CER | markers | lifecycle CER | translation CER |
+|---|---:|---:|---:|---:|---:|
+| baseline | 1.0210 | 0.6335 | 36/709 (5.1%) | 0.6181 | 0.6476 |
+| lora | 0.6967 | 0.3960 | 288/709 (40.6%) | 0.5419 | 0.2626 |
+| adapted (primary) | 0.6236 | 0.3564 | 321/709 (45.3%) | 0.4993 | 0.2257 |
 
 ## By subset
 
@@ -23,8 +35,8 @@ training volume, and a pooled figure hides a large gap between them.
 
 | subset | utts | WER base | WER lora | CER base | CER lora |
 |---|---:|---:|---:|---:|---:|
-| lifecycle | 80 | 0.9762 | **0.8515** | 0.6181 | **0.5419** |
-| translation | 429 | 1.0592 | **0.5648** | 0.6476 | **0.2626** |
+| lifecycle | 80 | 0.9762 | **0.7707** | 0.6181 | **0.4993** |
+| translation | 429 | 1.0592 | **0.4982** | 0.6476 | **0.2257** |
 
 ## Examples
 
@@ -36,50 +48,50 @@ Selected by largest per-utterance CER improvement.
 - baseline:  इज़ंबा पेर आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आ
 - adapted:   ई लम्बा पेर अहय ।
 
-**`281474976718393`** (translation, 3.7s) - CER 8.294 to 0.176
+**`281474976718393`** (translation, 3.7s) - CER 8.294 to 0.118
 
 - reference: हमार मुड पिरात बा ।
 - baseline:  अमार मोब तिलात बाः अप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप
-- adapted:   हमार मोब तिरात बा ।
+- adapted:   हमार मुब तिरात बा ।
 
-**`281474976715952`** (translation, 2.9s) - CER 7.474 to 0.105
+**`281474976715952`** (translation, 2.9s) - CER 7.474 to 0.053
 
 - reference: हम नाव से आवा बाटिन ।
 - baseline:  अम नाव फ्यावा माटन अप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आ�
-- adapted:   हम नाव से अवा बाटन ।
+- adapted:   हम नाव से आवा बाटेन ।
 
-**`281474976725419`** (translation, 3.9s) - CER 7.476 to 0.190
+**`281474976725419`** (translation, 3.9s) - CER 7.476 to 0.143
 
 - reference: हम कल उनका बच्चा देबय ।
 - baseline:  राँ बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बा
-- adapted:   हम काल उनका वच्चा देवे ।
+- adapted:   हम कल उ उनका वच्चा देबय ।
 
-**`281474976723559`** (translation, 3.1s) - CER 6.810 to 0.238
+**`281474976723559`** (translation, 3.1s) - CER 6.810 to 0.095
 
 - reference: हम बिहान स्कूल ना आउब ।
 - baseline:  आम भी आन श्प्रद नाव आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप �
-- adapted:   हम बिहान शकूल ना अव ।
+- adapted:   हम बिहान स्कूल ना अउव ।
 
-**`281474976718574`** (translation, 3.0s) - CER 6.750 to 0.333
+**`281474976718574`** (translation, 3.0s) - CER 6.750 to 0.375
 
 - reference: फ़ूल बहुत सुन्दर बाटय ना ।
 - baseline:  तो बोट सुन्दर बाटे ना अगर तो बाटे ना अगर तो बाटे ना अगर तो बाटे ना अगर तो बाटे ना अगर तो बाटे ना अगर तो बाटे ना अगर तो बाटे ना अगर तो बाटे ना अगर तो बाटे ना अगर तो बाटे ना अगर
-- adapted:   शुल खोट सुन्दर बाटे ना ।
+- adapted:   छुर भोट सुन्दर बाटे ना ।
 
 ## Regressions
 
-35 of 509 utterances got worse by more than
+20 of 509 utterances got worse by more than
 0.05 CER. The two largest:
 
-**`281474976716854`** (translation) - CER 0.423 to 7.462
+**`281474976716854`** (translation) - CER 0.423 to 7.423
 
 - reference: उनका जाय दिया अउर चाय पिया ।
-- adapted:   वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे व
+- adapted:   उ वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे वे
 
-**`281474976724415`** (translation) - CER 0.667 to 5.458
+**`281474976725540`** (translation) - CER 0.100 to 0.500
 
-- reference: हियां धुम्रपान निषेध अहय ।
-- adapted:   विविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविविव
+- reference: यह बोटा आय ।
+- adapted:   वेहा बोटा अइ ।
 
 ## Training run
 
@@ -108,10 +120,15 @@ test utterance id reaches the training set.
 - **Source audio is 8 kHz**, upsampled to the 16 kHz Whisper expects. Nothing
   above 4 kHz was ever captured. This caps both models equally, so the
   comparison holds while the absolute numbers stay depressed.
-- **`lifecycle` gained far less than `translation`.** It had a fifth the
-  training utterances and clips roughly four times longer. Spontaneous
-  long-form narrative remains the harder problem, and it is the subset the
-  storybook draws from.
+- **`lifecycle` gained far less than `translation`,** and more training did
+  not close the gap. It has a fifth the training utterances and clips roughly
+  four times longer. Doubling epochs improved it, but `translation` CER is
+  still less than half of `lifecycle` CER, which points at data volume and
+  the difficulty of long-form spontaneous speech rather than at training
+  time. It is also the subset the storybook draws from.
+- **Validation loss was still descending when training stopped** (0.5723 at
+  the end of 6 epochs). More epochs would likely gain a little further, with
+  diminishing returns and rising overfitting risk.
 
 ## Reproducing
 

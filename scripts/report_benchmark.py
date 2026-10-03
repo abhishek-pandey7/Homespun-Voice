@@ -54,7 +54,10 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--baseline", type=Path, default=TRANSCRIPTS / "baseline_test.jsonl")
-    ap.add_argument("--lora", type=Path, default=TRANSCRIPTS / "lora_test.jsonl")
+    ap.add_argument("--lora", type=Path, default=TRANSCRIPTS / "lora6ep_test.jsonl",
+                    help="the primary adapted run; examples are drawn against this")
+    ap.add_argument("--also", type=Path, nargs="*", default=[TRANSCRIPTS / "lora_test.jsonl"],
+                    help="further runs to include in the ablation table")
     ap.add_argument("--out", type=Path, default=OUT)
     ap.add_argument("--examples", type=int, default=6)
     args = ap.parse_args()
@@ -108,6 +111,38 @@ def main() -> int:
     l_pct = l_rec / total if total else 0
     L.append(f"| dialect markers recalled | {b_rec}/{total} ({b_pct:.1%}) | "
              f"**{l_rec}/{total} ({l_pct:.1%})** | {l_rec - b_rec:+d} |")
+
+    # ------------------------------------------------------------- ablation ---
+    extra = [(p, load(p)) for p in args.also if p.exists()]
+    if extra:
+        L += [
+            "",
+            "## Epoch ablation",
+            "",
+            "Identical data, seed and hyperparameters; only the epoch count differs.",
+            "The longer schedule stretches warmup and decay, so the shorter run is",
+            "already annealing where the longer one is still learning.",
+            "",
+            "| run | WER | CER | markers | lifecycle CER | translation CER |",
+            "|---|---:|---:|---:|---:|---:|",
+        ]
+        runs = [("baseline", base)] + [
+            (next(iter(rows.values()))["model"], rows) for _, rows in extra
+        ] + [("adapted (primary)", lora)]
+        for label, rows in runs:
+            ids = [u for u in shared if u in rows]
+            r = [base[u]["reference"] for u in ids]
+            s_all = score(r, [rows[u]["hypothesis"] for u in ids])
+            rec, tot = vocabulary_recall(r, [rows[u]["hypothesis"] for u in ids],
+                                         DIALECT_MARKERS)
+            cells = []
+            for subset in ("lifecycle", "translation"):
+                sub = [u for u in ids if base[u]["subset"] == subset]
+                ss = score([base[u]["reference"] for u in sub],
+                           [rows[u]["hypothesis"] for u in sub])
+                cells.append(f"{ss.cer:.4f}")
+            L.append(f"| {label} | {s_all.wer:.4f} | {s_all.cer:.4f} | "
+                     f"{rec}/{tot} ({rec / tot:.1%}) | {cells[0]} | {cells[1]} |")
 
     L += [
         "",
@@ -202,10 +237,15 @@ def main() -> int:
         "- **Source audio is 8 kHz**, upsampled to the 16 kHz Whisper expects. Nothing",
         "  above 4 kHz was ever captured. This caps both models equally, so the",
         "  comparison holds while the absolute numbers stay depressed.",
-        "- **`lifecycle` gained far less than `translation`.** It had a fifth the",
-        "  training utterances and clips roughly four times longer. Spontaneous",
-        "  long-form narrative remains the harder problem, and it is the subset the",
-        "  storybook draws from.",
+        "- **`lifecycle` gained far less than `translation`,** and more training did",
+        "  not close the gap. It has a fifth the training utterances and clips roughly",
+        "  four times longer. Doubling epochs improved it, but `translation` CER is",
+        "  still less than half of `lifecycle` CER, which points at data volume and",
+        "  the difficulty of long-form spontaneous speech rather than at training",
+        "  time. It is also the subset the storybook draws from.",
+        "- **Validation loss was still descending when training stopped** (0.5723 at",
+        "  the end of 6 epochs). More epochs would likely gain a little further, with",
+        "  diminishing returns and rising overfitting risk.",
         "",
         "## Reproducing",
         "",

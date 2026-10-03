@@ -257,10 +257,27 @@ Training: 360 steps, 25.6 min, peak VRAM 3.72 GB, val loss 1.1242 -> 0.8888.
 Adapter 6.8 MB. Decoding 7.6x faster (67s vs 463s) because the baseline generated
 runaway tokens the adapted model terminates.
 
-**Open limitation:** 35 of 509 utterances (6.9%) still regress by more than 0.05
-CER, with degenerate repetition loops. Reduced from baseline but not eliminated.
-A `repetition_penalty` / `no_repeat_ngram_size` ablation would have to be applied
-to BOTH models to keep the comparison fair.
+**Epoch ablation** - identical data, seed and hyperparameters:
+
+| run | WER | CER | markers | lifecycle CER | translation CER |
+|---|---:|---:|---:|---:|---:|
+| baseline | 1.0210 | 0.6335 | 5.1% | 0.6181 | 0.6476 |
+| 3 epochs | 0.6967 | 0.3960 | 40.6% | 0.5419 | 0.2626 |
+| **6 epochs** | **0.6236** | **0.3564** | **45.3%** | **0.4993** | **0.2257** |
+
+6 epochs adopted as primary (`models/vocalia-lora-6ep`, 8.7 MB, 52 min, val loss
+0.5723). vs baseline: WER -38.9%, CER -43.7%, markers 5.1% -> 45.3%.
+
+**Open limitations:**
+- 20 of 509 utterances (3.9%) still regress by more than 0.05 CER with degenerate
+  repetition loops - down from 35 at 3 epochs, but not eliminated. A
+  `repetition_penalty` ablation would have to be applied to BOTH models.
+- `translation` CER (0.2257) remains less than half `lifecycle` CER (0.4993).
+  Doubling epochs narrowed the gap but did not close it, which points at data
+  volume and long-form difficulty rather than training time. `lifecycle` is the
+  subset the storybook draws from.
+- Validation loss was still descending at the end of 6 epochs. Further epochs
+  would likely gain a little more, with diminishing returns.
 
 - [x] Honest, reproducible comparison exists
 - [x] Per-subset breakdown reviewed

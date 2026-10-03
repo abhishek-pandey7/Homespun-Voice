@@ -63,6 +63,9 @@ def main() -> int:
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--force", action="store_true", help="ignore existing output")
+    ap.add_argument("--label", default=None,
+                    help="name recorded in the output rows; defaults to --model. "
+                         "Use it to distinguish two adapters in one comparison.")
     args = ap.parse_args()
 
     rows = load_manifest(args.manifest, args.split)
@@ -71,12 +74,12 @@ def main() -> int:
     if args.limit:
         rows = rows[: args.limit]
 
-    out = args.out or OUT_DIR / f"{args.model}_{args.split}.jsonl"
+    out = args.out or OUT_DIR / f"{args.label or args.model}_{args.split}.jsonl"
     out.parent.mkdir(parents=True, exist_ok=True)
 
     done = {} if args.force else load_done(out)
     todo = [r for r in rows if r["utt_id"] not in done]
-    print(f"{args.model} / {args.split}: {len(rows)} utterances, "
+    print(f"{args.label or args.model} / {args.split}: {len(rows)} utterances, "
           f"{len(done)} already done, {len(todo)} to go")
     if not todo:
         print("[ok] nothing to do")
@@ -112,7 +115,7 @@ def main() -> int:
                     "subset": row["subset"],
                     "speaker_id": row["speaker_id"],
                     "duration_s": row["duration_s"],
-                    "model": args.model,
+                    "model": args.label or args.model,
                 }, ensure_ascii=False) + "\n")
                 audio_s += row["duration_s"]
                 written += 1
