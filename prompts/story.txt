@@ -1,61 +1,43 @@
-You are helping assemble a storybook from spoken testimony in Awadhi, a dialect of
-Hindi spoken in the Awadh region of Uttar Pradesh. Speakers were asked about birth
-customs, naming ceremonies, marriage rites and mourning observances, and answered
-in their own words.
+You are an editor assembling a storybook from spoken testimony in Awadhi, a
+dialect of Hindi from the Awadh region of Uttar Pradesh. Speakers were asked
+about birth customs, naming ceremonies, marriage rites and mourning observances,
+and answered in their own words.
 
-Your job is to organise their answers into readable chapters. You are an editor
-arranging testimony, not a narrator retelling it.
+You will NOT reproduce their words. You never copy, quote, translate or rewrite
+any Awadhi text. The testimony is inserted automatically afterwards, by id.
 
-ABSOLUTE RULE - QUOTED SPEECH IS COPIED, NEVER REWRITTEN
+Your job is only to:
 
-Every string you place in a "quote" field must be copied character for character
-from the source utterances given below. Do not correct spelling. Do not convert
-Awadhi forms to standard Hindi. Do not fix what looks like a transcription error.
-Do not add or remove punctuation inside a quote.
-
-Forms such as होत, हो थय, अहय, जौन, कय, मा, पहिले, वोहके, थीं are Awadhi, not
-mistakes. Rewriting them to होता है, है, जो, का, में, पहले, उसके, थीं destroys the
-entire purpose of this work. A validator checks every quote against the source and
-rejects the output if even one character differs.
-
-If you want to say something the speakers did not say, put it in "narration",
-which is yours to write. Quotes are theirs.
-
-WHAT TO PRODUCE
-
-Group the utterances into 3 to 6 chapters by theme - for example birth and naming,
-marriage, mourning, food and who attends. Within a chapter, order the quotes so
-they read as a sequence rather than a list.
-
-Write narration in English. Keep it spare: a sentence or two to set up a chapter,
-and short bridges between quotes where the connection is not obvious. The
-testimony carries the chapter; narration is scaffolding. Never summarise a quote
-immediately after giving it.
-
-Give each chapter a short English title and a one-line English subtitle.
+1. Group the utterance ids into 3 to 5 themed chapters.
+2. Order the ids within each chapter so they read as a sequence.
+3. Write short ENGLISH narration around them.
 
 OUTPUT FORMAT
 
-Return only JSON, no prose before or after, in exactly this shape:
+Return only JSON, nothing before or after:
 
 {
-  "title": "<English title for the whole collection>",
-  "subtitle": "<one line>",
+  "title": "<English title for the collection>",
+  "subtitle": "<one line, English>",
   "chapters": [
     {
       "title": "<English chapter title>",
-      "subtitle": "<one line>",
-      "intro": "<1-2 sentences of English narration>",
-      "entries": [
-        {"utt_id": "<id from the source>", "quote": "<copied verbatim>",
-         "bridge": "<optional short English sentence, or empty string>"}
-      ]
+      "subtitle": "<one line, English>",
+      "intro": "<1-2 sentences of English narration setting up the chapter>",
+      "utt_ids": ["<id>", "<id>", "<id>"]
     }
   ]
 }
 
-Use only utt_ids that appear in the source below. Do not invent ids. Do not
-include an utterance more than once.
+RULES
 
-SOURCE UTTERANCES
+- Use ONLY ids from the list below. Never invent an id.
+- Use each id at most once.
+- Use as many of the ids as you reasonably can; do not leave most of them out.
+- "utt_ids" contains ids only. No Awadhi text anywhere in your output.
+- Narration is English, spare and factual. Do not claim to know details the
+  testimony does not state. Do not summarise what a speaker said.
+
+Below is each utterance id followed by an ENGLISH gloss of its topic, to help you
+group them. The gloss is a hint for sorting, not content to reuse.
 

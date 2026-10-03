@@ -65,11 +65,17 @@ class ValidationResult:
         return "\n".join(lines)
 
 
-def validate_quotes(story: dict[str, Any], sources: dict[str, str]) -> ValidationResult:
+def validate_quotes(story: dict[str, Any], sources: dict[str, str],
+                    min_quotes: int = 1) -> ValidationResult:
     """Every quote must be a verbatim substring of its source utterance.
 
     Substring rather than equality: quoting part of a long answer is legitimate
     editing. Altering any character of it is not.
+
+    ``min_quotes`` closes a hole that a first version shipped with: a story
+    containing no quotes at all passed, because every one of its zero quotes was
+    verbatim. A check that accepts an empty result is worse than no check, since
+    it reports success.
     """
     result = ValidationResult(ok=True)
     for chapter in story.get("chapters", []):
@@ -89,8 +95,54 @@ def validate_quotes(story: dict[str, Any], sources: dict[str, str]) -> Validatio
                     "utt_id": utt_id, "quote": quote, "source": source,
                     "problem": "quote is not a verbatim substring of the source",
                 })
+    if result.checked < min_quotes:
+        result.failures.append({
+            "utt_id": "-",
+            "problem": f"only {result.checked} quotes, need at least {min_quotes}",
+        })
     result.ok = not result.failures
     return result
+
+
+def assemble(plan: dict[str, Any], sources: dict[str, str]) -> dict[str, Any]:
+    """Turn the model's id-only plan into a story, inserting the text ourselves.
+
+    The model never handles Awadhi text. It returns chapter titles, English
+    narration and lists of utterance ids; the quotes are looked up here straight
+    from the corpus. Verbatim fidelity stops being something to verify after the
+    fact and becomes structurally impossible to break -- the model has no channel
+    through which to alter a word.
+
+    Ids the model invented are dropped and reported by the caller via coverage.
+    """
+    # Small models return the chapter list bare about as often as they wrap it
+    # in the requested object, so accept either shape rather than crashing.
+    if isinstance(plan, list):
+        plan = {"chapters": plan}
+    chapters = []
+    seen: set[str] = set()
+    for ch in plan.get("chapters", []):
+        if not isinstance(ch, dict):
+            continue
+        entries = []
+        for utt_id in ch.get("utt_ids", []):
+            utt_id = str(utt_id)
+            if utt_id in seen or utt_id not in sources:
+                continue
+            seen.add(utt_id)
+            entries.append({"utt_id": utt_id, "quote": sources[utt_id], "bridge": ""})
+        if entries:
+            chapters.append({
+                "title": ch.get("title", ""),
+                "subtitle": ch.get("subtitle", ""),
+                "intro": ch.get("intro", ""),
+                "entries": entries,
+            })
+    return {
+        "title": plan.get("title", "Vocalia"),
+        "subtitle": plan.get("subtitle", ""),
+        "chapters": chapters,
+    }
 
 
 def check_coverage(story: dict[str, Any], sources: dict[str, str]) -> dict[str, Any]:
@@ -119,20 +171,41 @@ class StoryModel:
 
 
 class LocalGemma(StoryModel):
-    """gemma-2-2b-it through transformers, on the local GPU."""
+    """gemma-2-2b-it through transformers, on the local GPU.
 
-    def __init__(self, model_id: str = "google/gemma-2-2b-it") -> None:
+    Quantised to 4-bit by default. At bf16 the 2.6B parameters occupy about
+    5.2 GB, which on a 6 GB card leaves nothing for the prompt and KV cache --
+    it OOMs partway through generation. NF4 brings the weights to roughly
+    1.5 GB and leaves room to actually generate.
+    """
+
+    def __init__(self, model_id: str = "google/gemma-2-2b-it",
+                 load_4bit: bool = True) -> None:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        self.name = f"{model_id} (local)"
         self.torch = torch
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_id,
-            torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
-            device_map="auto" if torch.cuda.is_available() else None,
-        ).eval()
+
+        kwargs: dict = {}
+        if torch.cuda.is_available():
+            kwargs["device_map"] = "auto"
+            if load_4bit:
+                from transformers import BitsAndBytesConfig
+
+                kwargs["quantization_config"] = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_quant_type="nf4",
+                    bnb_4bit_compute_dtype=torch.bfloat16,
+                    bnb_4bit_use_double_quant=True,
+                )
+            else:
+                kwargs["torch_dtype"] = torch.bfloat16
+        else:
+            kwargs["torch_dtype"] = torch.float32
+
+        self.name = f"{model_id} (local{', 4-bit nf4' if load_4bit else ''})"
+        self.model = AutoModelForCausalLM.from_pretrained(model_id, **kwargs).eval()
 
     def generate(self, prompt: str, max_new_tokens: int = 4096) -> str:
         messages = [{"role": "user", "content": prompt}]

@@ -1,0 +1,39 @@
+{
+  "model": "eleven_multilingual_v2",
+  "voice_id": "ch0vU2DwfJVmFG2iZy89",
+  "chapters": [
+    {
+      "chapter": 1,
+      "title": "Naming Ceremony and Marriage Rites",
+      "file": "chapter_1.mp3",
+      "characters": 108,
+      "bytes": 128775,
+      "voice_id": "pNInz6obpgDQGcFmaJgB",
+      "model": "eleven_multilingual_v2",
+      "rendered_at": "2026-10-03T12:19:11+00:00",
+      "status": "rendered"
+    },
+    {
+      "chapter": 2,
+      "title": "Mourning Observances",
+      "file": "chapter_2.mp3",
+      "characters": 93,
+      "bytes": 110385,
+      "voice_id": "pNInz6obpgDQGcFmaJgB",
+      "model": "eleven_multilingual_v2",
+      "rendered_at": "2026-10-03T12:19:12+00:00",
+      "status": "rendered"
+    },
+    {
+      "chapter": 3,
+      "title": "Food and Festivities",
+      "file": "chapter_3.mp3",
+      "characters": 96,
+      "bytes": 126685,
+      "voice_id": "pNInz6obpgDQGcFmaJgB",
+      "model": "eleven_multilingual_v2",
+      "rendered_at": "2026-10-03T12:19:13+00:00",
+      "status": "rendered"
+    }
+  ]
+}

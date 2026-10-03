@@ -135,11 +135,11 @@ repo scaffold + pinned env  (T1, T2)  [done]
 ### Checkpoint: Benchmark
 
 ### Phase 4: Story and Narration
-- [ ] Task 9: Gemma 2 story engine with verbatim quote preservation
-- [ ] Task 10: ElevenLabs narration
+- [x] Task 9: Gemma 2 story engine with verbatim quote preservation
+- [x] Task 10: ElevenLabs narration
 
 ### Phase 5: Reader and Deployment
-- [ ] Task 11: Static storybook reader
+- [x] Task 11: Static storybook reader
 - [ ] Task 12: Deployment to Render
 
 ### Checkpoint: Complete

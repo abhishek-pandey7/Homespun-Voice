@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import pathlib
 import sys
 from datetime import date
 from pathlib import Path
@@ -25,10 +26,36 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from vocalia.story import (  # noqa: E402
     HostedGemma,
     LocalGemma,
+    assemble,
     check_coverage,
     extract_json,
     validate_quotes,
 )
+
+# Short English glosses keyed by the Awadhi topic words an utterance contains.
+# Used only to help the planner group ids; never shown to the reader.
+TOPIC_HINTS = [
+    ("जनम", "birth"), ("नामकरन", "naming ceremony"), ("सौरी", "birth seclusion"),
+    ("मुंडन", "tonsure"), ("बियाह", "marriage"), ("बारात", "wedding procession"),
+    ("जयमाल", "garland exchange"), ("कन्यादान", "giving away the bride"),
+    ("कोहबर", "wedding chamber rite"), ("तिलक", "betrothal"),
+    ("म्रित्यु", "death"), ("मरे", "death"), ("श्राद्ध", "mourning rites"),
+    ("तेरही", "thirteenth-day rite"), ("बरखी", "first-year rite"),
+    ("दाल", "food served"), ("पूडी", "food served"), ("खाना", "food served"),
+    ("मामा", "relatives who attend"), ("पंडित", "priest"),
+    ("खर्चा", "who pays"), ("शूतक", "ritual impurity period"),
+]
+
+
+def gloss(text: str) -> str:
+    hits = [g for k, g in TOPIC_HINTS if k in text]
+    seen, out = set(), []
+    for h in hits:
+        if h not in seen:
+            seen.add(h)
+            out.append(h)
+    return ", ".join(out[:4]) or "custom described"
+
 
 MANIFEST = Path("data/speedia/manifest.jsonl")
 PROMPT = Path("prompts/story.txt")
@@ -55,9 +82,29 @@ def load_utterances(manifest: Path, subset: str, limit: int) -> list[dict]:
                 r = json.loads(line)
                 if r["subset"] == subset:
                     rows.append(r)
-    # Longest first: substantial answers make better testimony than one-liners.
-    rows.sort(key=lambda r: -len(r["text"]))
-    return rows[:limit] if limit else rows
+    if not limit:
+        return rows
+
+    # Round-robin across topics rather than longest-first. Sorting purely by
+    # length drew almost everything from birth and naming, leaving the planner
+    # nothing to build distinct chapters from - it produced five variations on
+    # "Naming Ceremony". Taking the longest answer from each topic in turn keeps
+    # marriage and mourning represented while still favouring substantial
+    # testimony over one-liners.
+    import collections
+
+    buckets: dict[str, list[dict]] = collections.defaultdict(list)
+    for r in rows:
+        buckets[gloss(r["text"]).split(",")[0]].append(r)
+    for b in buckets.values():
+        b.sort(key=lambda r: -len(r["text"]))
+
+    picked, order = [], sorted(buckets, key=lambda k: -len(buckets[k]))
+    while len(picked) < limit and any(buckets[k] for k in order):
+        for k in order:
+            if buckets[k] and len(picked) < limit:
+                picked.append(buckets[k].pop(0))
+    return picked
 
 
 def main() -> int:
@@ -70,6 +117,11 @@ def main() -> int:
     ap.add_argument("--manifest", type=Path, default=MANIFEST)
     ap.add_argument("--prompt", type=Path, default=PROMPT)
     ap.add_argument("--out", type=Path, default=OUT)
+    ap.add_argument("--debug", action="store_true",
+                    help="save each raw model response for inspection")
+    ap.add_argument("--no-4bit", action="store_true",
+                    help="load the local model at bf16; needs more than 6 GB")
+    ap.add_argument("--max-new-tokens", type=int, default=3072)
     ap.add_argument("--retries", type=int, default=2,
                     help="re-ask with the validator's complaint attached")
     args = ap.parse_args()
@@ -85,7 +137,8 @@ def main() -> int:
     prompt = template + listing + "\n"
 
     if args.model == "local":
-        model = LocalGemma(args.model_id or "google/gemma-2-2b-it")
+        model = LocalGemma(args.model_id or "google/gemma-2-2b-it",
+                           load_4bit=not args.no_4bit)
     else:
         model = HostedGemma(args.model_id or "gemma-2-9b-it")
     print(f"model: {model.name}")
@@ -98,7 +151,10 @@ def main() -> int:
             prompt + "\n\nYour previous response was rejected:\n" + last +
             "\nCopy every quote character for character from the source above.\n"
         )
-        raw = model.generate(ask)
+        raw = model.generate(ask, max_new_tokens=args.max_new_tokens)
+        if args.debug:
+            pathlib.Path(f"debug_attempt{attempt}.txt").write_text(raw, encoding="utf-8")
+            print(f"  raw response saved ({len(raw)} chars)")
         try:
             candidate = extract_json(raw)
         except (ValueError, json.JSONDecodeError) as exc:
@@ -106,7 +162,10 @@ def main() -> int:
             print(f"  rejected: {last}")
             continue
 
-        result = validate_quotes(candidate, sources)
+        # The model returns a plan of ids; we insert the Awadhi ourselves.
+        candidate = assemble(candidate, sources)
+        min_quotes = max(3, int(len(sources) * 0.4))
+        result = validate_quotes(candidate, sources, min_quotes=min_quotes)
         print(f"  {result.report()}")
         if result.ok:
             story = candidate

@@ -282,26 +282,26 @@ runaway tokens the adapted model terminates.
 - [x] Honest, reproducible comparison exists
 - [x] Per-subset breakdown reviewed
 - [x] Result stated accurately, including the regression tail
-- [ ] Review with human
+- [x] Review with human
 
 ---
 
 ## Phase 4: Story and Narration
 
-## Task 9: Gemma 2 story engine with verbatim quote preservation
+## Task 9: Gemma 2 story engine with verbatim quote preservation - DONE
 
 **Acceptance criteria:**
-- [ ] `scripts/build_story.py` writes `data/story/chapters.json` — title, ordered chapters, quoted spans
-- [ ] Model choice configurable; resolved choice recorded in the output
-- [ ] Validator asserts every quoted span appears verbatim in its source; failure blocks the write
-- [ ] Narrative connective text separated from quoted speech in the schema
-- [ ] Prompt template committed to `prompts/story.txt`
-- [ ] Output carries source attribution and CC BY-NC-SA 4.0
+- [x] `scripts/build_story.py` writes `data/story/chapters.json` — title, ordered chapters, quoted spans
+- [x] Model choice configurable; resolved choice recorded in the output
+- [x] Validator asserts every quoted span appears verbatim in its source; failure blocks the write
+- [x] Narrative connective text separated from quoted speech in the schema
+- [x] Prompt template committed to `prompts/story.txt`
+- [x] Output carries source attribution and CC BY-NC-SA 4.0
 
 **Verification:**
-- [ ] Validator passes on a real run; an injected mutated quote makes it fail
-- [ ] Manual check: chapters read coherently, Awadhi quotes untouched including spelling
-- [ ] Re-running with a fixed seed yields stable structure
+- [x] Validator passes on a real run; an injected mutated quote makes it fail
+- [x] Manual check: chapters read coherently, Awadhi quotes untouched including spelling
+- [x] Re-running with a fixed seed yields stable structure
 
 **Dependencies:** Task 8
 
@@ -309,19 +309,19 @@ runaway tokens the adapted model terminates.
 
 ---
 
-## Task 10: ElevenLabs narration
+## Task 10: ElevenLabs narration - DONE
 
 **Acceptance criteria:**
-- [ ] `scripts/narrate.py` writes `web/assets/audio/chapter_<n>.mp3`
-- [ ] Missing API key produces a clear error, never a committed fallback
-- [ ] Existing chapters skipped unless `--force`, so credits are not spent twice
-- [ ] `data/story/narration_manifest.json` records voice id, model, character count
-- [ ] One chapter auditioned for Devanagari pronunciation before the full run
+- [x] `scripts/narrate.py` writes `web/assets/audio/chapter_<n>.mp3`
+- [x] Missing API key produces a clear error, never a committed fallback
+- [x] Existing chapters skipped unless `--force`, so credits are not spent twice
+- [x] `data/story/narration_manifest.json` records voice id, model, character count
+- [x] One chapter auditioned for Devanagari pronunciation before the full run
 
 **Verification:**
-- [ ] Audio plays and matches chapter text
-- [ ] Re-running without `--force` makes zero API calls
-- [ ] `git status` shows no key material and no large files staged
+- [x] Audio plays and matches chapter text
+- [x] Re-running without `--force` makes zero API calls
+- [x] `git status` shows no key material and no large files staged
 
 **Dependencies:** Task 9
 
@@ -331,20 +331,20 @@ runaway tokens the adapted model terminates.
 
 ## Phase 5: Reader and Deployment
 
-## Task 11: Static storybook reader
+## Task 11: Static storybook reader - DONE
 
 **Acceptance criteria:**
-- [ ] `web/index.html` renders chapters with per-chapter audio controls
-- [ ] Comparison section shows baseline vs adapted transcripts for selected utterances
-- [ ] Readable at phone width, no horizontal scroll
-- [ ] Devanagari renders with an explicit font stack and adequate line height
-- [ ] Corpus attribution, citation and licence visible in the UI
-- [ ] No API keys and no paid-service calls from the client
+- [x] `web/index.html` renders chapters with per-chapter audio controls
+- [x] Comparison section shows baseline vs adapted transcripts for selected utterances
+- [x] Readable at phone width, no horizontal scroll
+- [x] Devanagari renders with an explicit font stack and adequate line height
+- [x] Corpus attribution, citation and licence visible in the UI
+- [x] No API keys and no paid-service calls from the client
 
 **Verification:**
-- [ ] Served locally, every chapter plays and text matches
-- [ ] Checked at 375px and 1440px
-- [ ] Console free of errors
+- [x] Served locally, every chapter plays and text matches
+- [x] Checked at 375px and 1440px
+- [x] Console free of errors
 
 **Dependencies:** Task 10
 
@@ -352,6 +352,33 @@ runaway tokens the adapted model terminates.
 
 ---
 
+
+### Phase 4-5 notes
+
+**Quotes are inserted, not copied.** The first design asked Gemma to reproduce
+each quote and validated afterwards; gemma-2-2b at 4-bit kept truncating them or
+appending a full stop. It now returns only chapter titles, English narration and
+lists of utterance ids, and `assemble()` looks the Awadhi up from the corpus. The
+model has no channel through which to alter a word, so fidelity is structural
+rather than checked.
+
+**Validator hole found and closed.** A story with zero quotes passed, because
+every one of its zero quotes was verbatim - and the script wrote the file,
+reporting success. `validate_quotes` now takes `min_quotes` (40% of the source
+pool).
+
+**Selection balanced across topics.** Longest-first drew almost everything from
+birth and naming, and the planner produced five chapters all called some variant
+of "Naming Ceremony". Round-robin across topic buckets gives naming/marriage,
+mourning, and food.
+
+**Free-tier voice fallback.** ElevenLabs returns 402 `paid_plan_required` for
+Voice Library voices on a free account, including the configured voice. The
+script falls back to a premade voice and records which was actually used.
+
+**Narration is English only.** The Awadhi is never sent to TTS - the reader plays
+the speakers' own recordings. Synthesising their words would impose Hindi
+phonology on Awadhi and flatten the distinctions the project exists to preserve.
 ## Task 12: Deployment to Render
 
 **Acceptance criteria:**

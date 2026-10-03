@@ -41,12 +41,24 @@ function renderStory(story) {
     if (chapter.subtitle) section.appendChild(el("p", "chapter-sub", chapter.subtitle));
     if (chapter.intro) section.appendChild(el("p", "intro", chapter.intro));
 
+    // Narration is English and generated; the quotes below are the speakers'
+    // own recordings. Labelled so a listener is never unsure which is which.
+    const narration = el("div", "narration");
+    narration.appendChild(el("span", "narration-label", "Narration"));
+    const narrAudio = el("audio");
+    narrAudio.controls = true;
+    narrAudio.preload = "none";
+    narrAudio.src = `assets/audio/chapter_${i + 1}.mp3`;
+    narrAudio.addEventListener("error", () => narration.remove());
+    narration.appendChild(narrAudio);
+    section.appendChild(narration);
+
     (chapter.entries || []).forEach((entry) => {
       const card = el("div", "entry");
       card.appendChild(el("p", "quote", entry.quote || ""));
 
       const foot = el("div", "entry-foot");
-      foot.appendChild(el("span", "utt-id", entry.utt_id || ""));
+      foot.appendChild(el("span", "utt-id", "Recorded voice"));
       const audio = el("audio");
       audio.controls = true;
       audio.preload = "none";

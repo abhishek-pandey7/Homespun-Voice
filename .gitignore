@@ -34,8 +34,12 @@ models/**
 *.pth
 
 # --- generated narration ---
+# Tracked for the same reason as the clips: Render serves the static site from
+# the repo, so an uncommitted mp3 404s in the browser. These are three short
+# English narration files, a few hundred KB in total.
 web/assets/audio/**
 !web/assets/audio/.gitkeep
+!web/assets/audio/*.mp3
 
 # --- story clips served by the deployed reader ---
 # Deliberately tracked. Render serves the static site straight from the repo,
