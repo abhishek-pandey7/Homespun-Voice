@@ -47,10 +47,16 @@ def main() -> int:
     ap.add_argument("--smoke", action="store_true",
                     help="50 steps on a small slice, to prove it fits in VRAM")
     ap.add_argument("--max-steps", type=int, default=0)
+    ap.add_argument("--epochs", type=int, default=0,
+                    help="override configs/lora.yaml epochs, for ablations")
+    ap.add_argument("--tag", default="full",
+                    help="label recorded in reports/train_log.jsonl")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(args.config.read_text(encoding="utf-8"))
     tr = cfg["training"]
+    if args.epochs:
+        tr["epochs"] = args.epochs
 
     import torch
     from transformers import (
@@ -185,7 +191,7 @@ def main() -> int:
     LOG.parent.mkdir(parents=True, exist_ok=True)
     with LOG.open("a", encoding="utf-8", newline="\n") as fh:
         fh.write(json.dumps({
-            "mode": "smoke" if args.smoke else "full",
+            "mode": "smoke" if args.smoke else args.tag,
             "train_utterances": len(train_rows),
             "validation_utterances": len(val_rows),
             "train_audio_minutes": round(audio_min, 1),
