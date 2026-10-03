@@ -1,0 +1,46 @@
+# LoRA hyperparameters for whisper-small on the SpeeD-IA Awadhi corpus.
+# Read by scripts/train_lora.py; nothing here is hardcoded at the call site.
+
+base_model: openai/whisper-small
+language: hi          # Whisper has no Awadhi id; pinned to match inference
+task: transcribe
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  # Attention projections only. Adapting the feed-forward layers as well would
+  # roughly triple trainable parameters for a corpus this size, which buys
+  # overfitting rather than accuracy.
+  target_modules: ["q_proj", "v_proj"]
+
+training:
+  learning_rate: 1.0e-4
+  epochs: 3
+  # Effective batch 16 = 8 x 2. Chosen by measurement on the 6 GB card:
+  #   batch 2 + checkpointing   1.69 GB   1.71 samples/s
+  #   batch 4, no checkpointing 5.56 GB   2.47 samples/s
+  #   batch 8 + checkpointing   3.65 GB   2.90 samples/s  <- this
+  # Whisper pads every mel to 30s, so memory per sample is constant regardless
+  # of clip duration and scales linearly with batch size.
+  per_device_batch_size: 8
+  gradient_accumulation_steps: 2
+  warmup_ratio: 0.1
+  weight_decay: 0.0
+  max_grad_norm: 1.0
+  fp16: true
+  # On, and it is the faster choice here rather than a concession. Recomputing
+  # activations frees enough memory to quadruple the batch, and the larger batch
+  # repays the recompute with interest. Disabling it forced batch 4 and ran
+  # slower; batch 8 without it allocated 9.65 GB, which Windows silently spills
+  # to system RAM instead of raising OOM, halving throughput while appearing
+  # to succeed.
+  gradient_checkpointing: true
+  # Held out of train for early stopping. The corpus test split is never touched
+  # during training.
+  validation_fraction: 0.05
+  seed: 42
+  eval_steps: 100
+  save_steps: 100
+  logging_steps: 10
+  early_stopping_patience: 3

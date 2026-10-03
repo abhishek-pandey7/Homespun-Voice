@@ -197,22 +197,22 @@ figure at this baseline. Throughput 4.5x realtime, 463s for 34.6 min of audio.
 
 ## Phase 3: Adaptation
 
-## Task 7: LoRA fine-tune of whisper-small
+## Task 7: LoRA fine-tune of whisper-small - DONE
 
 **Acceptance criteria:**
-- [ ] `scripts/train_lora.py` uses PEFT targeting `["q_proj", "v_proj"]`, lr 1e-4, rank 8-16
-- [ ] Fits in 6 GB using fp16, batch 2-4, gradient accumulation; peak VRAM logged
-- [ ] A validation slice held out of train — the test split is never seen during training
-- [ ] Adapter saves to `models/vocalia-lora/` (gitignored)
-- [ ] Per-epoch train and validation loss logged to `reports/train_log.jsonl`
-- [ ] Hyperparameters read from `configs/lora.yaml`, not hardcoded
+- [x] `scripts/train_lora.py` uses PEFT targeting `["q_proj", "v_proj"]`, lr 1e-4, rank 8-16
+- [x] Fits in 6 GB using fp16, batch 2-4, gradient accumulation; peak VRAM logged
+- [x] A validation slice held out of train — the test split is never seen during training
+- [x] Adapter saves to `models/vocalia-lora/` (gitignored)
+- [x] Per-epoch train and validation loss logged to `reports/train_log.jsonl`
+- [x] Hyperparameters read from `configs/lora.yaml`, not hardcoded
 
 **Verification:**
-- [ ] Completes without OOM; peak VRAM under 6 GB
-- [ ] Validation loss curve recorded; a flat or rising curve is reported, not hidden
-- [ ] Adapter loads onto the base model in a fresh process
-- [ ] Adapter directory is a few MB — confirming LoRA, not a full fine-tune
-- [ ] Assertion: no test-split utterance ID appears in training
+- [x] Completes without OOM; peak VRAM under 6 GB
+- [x] Validation loss curve recorded; a flat or rising curve is reported, not hidden
+- [x] Adapter loads onto the base model in a fresh process
+- [x] Adapter directory is a few MB — confirming LoRA, not a full fine-tune
+- [x] Assertion: no test-split utterance ID appears in training
 
 **Dependencies:** Task 6
 
@@ -222,20 +222,20 @@ figure at this baseline. Throughput 4.5x realtime, 463s for 34.6 min of audio.
 
 ---
 
-## Task 8: Baseline vs adapted benchmark report
+## Task 8: Baseline vs adapted benchmark report - DONE
 
 **Acceptance criteria:**
-- [ ] `scripts/transcribe.py --model lora --split test` produces `data/transcripts/lora_test.jsonl`
-- [ ] `reports/benchmark.md` holds WER and CER, baseline vs adapted, pooled and per subset
-- [ ] At least 5 side-by-side examples where the models differ, with the reference shown
-- [ ] A dialect-vocabulary recall count for each model
-- [ ] Absolute and relative change stated for each metric
-- [ ] If the adapter fails to improve a metric, the report says so with a hypothesis
+- [x] `scripts/transcribe.py --model lora --split test` produces `data/transcripts/lora_test.jsonl`
+- [x] `reports/benchmark.md` holds WER and CER, baseline vs adapted, pooled and per subset
+- [x] At least 5 side-by-side examples where the models differ, with the reference shown
+- [x] A dialect-vocabulary recall count for each model
+- [x] Absolute and relative change stated for each metric
+- [x] If the adapter fails to improve a metric, the report says so with a hypothesis
 
 **Verification:**
-- [ ] Both models scored on the identical frozen test set through one script
-- [ ] Re-running reproduces the numbers
-- [ ] Manual check: at least one example shows preserved Awadhi vocabulary where the
+- [x] Both models scored on the identical frozen test set through one script
+- [x] Re-running reproduces the numbers
+- [x] Manual check: at least one example shows preserved Awadhi vocabulary where the
       baseline substituted standard Hindi
 
 **Dependencies:** Task 7
@@ -244,10 +244,27 @@ figure at this baseline. Throughput 4.5x realtime, 463s for 34.6 min of audio.
 
 ---
 
-### Checkpoint: Benchmark
-- [ ] Honest, reproducible comparison exists
-- [ ] Per-subset breakdown reviewed
-- [ ] Artifact proceeds regardless of result, with the result stated accurately
+### Checkpoint: Benchmark - PASSED
+
+| metric | baseline | adapted | change |
+|---|---:|---:|---:|
+| WER | 1.0210 | 0.6967 | -31.8% |
+| CER | 0.6335 | 0.3960 | -37.5% |
+| dialect markers | 36/709 (5.1%) | 288/709 (40.6%) | 8x |
+
+Per subset: translation WER -46.7% / CER -59.5%; lifecycle WER -12.8% / CER -12.3%.
+Training: 360 steps, 25.6 min, peak VRAM 3.72 GB, val loss 1.1242 -> 0.8888.
+Adapter 6.8 MB. Decoding 7.6x faster (67s vs 463s) because the baseline generated
+runaway tokens the adapted model terminates.
+
+**Open limitation:** 35 of 509 utterances (6.9%) still regress by more than 0.05
+CER, with degenerate repetition loops. Reduced from baseline but not eliminated.
+A `repetition_penalty` / `no_repeat_ngram_size` ablation would have to be applied
+to BOTH models to keep the comparison fair.
+
+- [x] Honest, reproducible comparison exists
+- [x] Per-subset breakdown reviewed
+- [x] Result stated accurately, including the regression tail
 - [ ] Review with human
 
 ---

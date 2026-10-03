@@ -129,8 +129,8 @@ repo scaffold + pinned env  (T1, T2)  [done]
 ### Checkpoint: Baseline
 
 ### Phase 3: Adaptation
-- [ ] Task 7: LoRA fine-tune of whisper-small
-- [ ] Task 8: Baseline vs adapted benchmark report
+- [x] Task 7: LoRA fine-tune of whisper-small
+- [x] Task 8: Baseline vs adapted benchmark report
 
 ### Checkpoint: Benchmark
 
