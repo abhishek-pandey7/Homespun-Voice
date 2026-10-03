@@ -32,7 +32,7 @@ upgrading to 2026.09.27 fixed extraction. No cookies or auth needed.
 
 ## Phase 1: Corpus
 
-## Task 3: Import the SpeeD-IA Awadhi corpus
+## Task 3: Import the SpeeD-IA Awadhi corpus - DONE
 
 **Description:** Fetch the audio from the authors' Google Drive folder and the
 transcriptions from the GitHub repository, then join them into a single local corpus
@@ -40,18 +40,18 @@ tree. The join is on utterance ID, which appears both as the WAV filename and as
 `ID` column in the TSV transcription files.
 
 **Acceptance criteria:**
-- [ ] Audio downloaded to `data/speedia/` preserving the subset and speaker structure
-- [ ] Transcriptions for `lifecycle` and `translation`, train and test, fetched to `data/speedia/transcripts/`
-- [ ] `scripts/import_speedia.py` joins audio to transcript on utterance ID
-- [ ] Every joined record carries: `utt_id`, `audio_path`, `text`, `subset`, `split`, `speaker_dir`
-- [ ] IDs present in a transcript but missing audio are reported and counted, not silently dropped
-- [ ] IDs present as audio but missing a transcript are reported and counted
-- [ ] Re-running does not re-download existing files
+- [x] Audio downloaded to `data/speedia/` preserving the subset and speaker structure
+- [x] Transcriptions for `lifecycle` and `translation`, train and test, fetched to `data/speedia/transcripts/`
+- [x] `scripts/import_speedia.py` joins audio to transcript on utterance ID
+- [x] Every joined record carries: `utt_id`, `audio_path`, `text`, `subset`, `split`, `speaker_dir`
+- [x] IDs present in a transcript but missing audio are reported and counted, not silently dropped
+- [x] IDs present as audio but missing a transcript are reported and counted
+- [x] Re-running does not re-download existing files
 
 **Verification:**
-- [ ] Joined record count reconciles against 2,070 train + 519 test from the TSVs
-- [ ] A random sample of 5 records: audio plays and matches its transcript
-- [ ] Missing-file counts printed explicitly, including zero
+- [x] Joined record count reconciles against 2,070 train + 519 test from the TSVs
+- [x] A random sample of 5 records: audio plays and matches its transcript
+- [x] Missing-file counts printed explicitly, including zero
 
 **Dependencies:** Task 2
 
@@ -61,27 +61,27 @@ tree. The join is on utterance ID, which appears both as the WAV filename and as
 
 ---
 
-## Task 4: Corpus QA, normalisation and manifest
+## Task 4: Corpus QA, normalisation and manifest - DONE
 
 **Description:** Normalise every audio file to 16 kHz mono, measure the corpus, exclude
 what Whisper cannot consume, and write the dataset card. This is the gate: nothing
 downstream may run on an unmeasured corpus.
 
 **Acceptance criteria:**
-- [ ] All audio normalised to 16 kHz mono PCM; any file requiring conversion is counted
-- [ ] `data/speedia/manifest.jsonl` holds one row per usable utterance with duration
-- [ ] Utterances longer than 30s flagged, excluded, counted (Whisper truncates silently)
-- [ ] Zero-length, silent, or unreadable files excluded and counted
-- [ ] Totals reported: utterances, total duration, per split, per subset, per speaker
-- [ ] `data/speedia/DATASET_CARD.md` records source, citation, CC BY-NC-SA 4.0 terms, the
+- [x] All audio normalised to 16 kHz mono PCM; any file requiring conversion is counted
+- [x] `data/speedia/manifest.jsonl` holds one row per usable utterance with duration
+- [x] Utterances longer than 30s flagged, excluded, counted (Whisper truncates silently)
+- [x] Zero-length, silent, or unreadable files excluded and counted
+- [x] Totals reported: utterances, total duration, per split, per subset, per speaker
+- [x] `data/speedia/DATASET_CARD.md` records source, citation, CC BY-NC-SA 4.0 terms, the
       counts above, exclusions with reasons, and known limitations
-- [ ] README and dataset card both carry the Interspeech 2022 citation
+- [x] README and dataset card both carry the Interspeech 2022 citation
 
 **Verification:**
-- [ ] `ffprobe` on 10 random files confirms 16000 Hz / 1 channel
-- [ ] Sum of per-split durations equals the reported total
-- [ ] Excluded count plus usable count equals the joined record count from T3
-- [ ] Manual check: read the dataset card as a stranger — is provenance unambiguous?
+- [x] `ffprobe` on 10 random files confirms 16000 Hz / 1 channel
+- [x] Sum of per-split durations equals the reported total
+- [x] Excluded count plus usable count equals the joined record count from T3
+- [x] Manual check: read the dataset card as a stranger — is provenance unambiguous?
 
 **Dependencies:** Task 3
 
@@ -91,10 +91,26 @@ downstream may run on an unmeasured corpus.
 
 ---
 
-### Checkpoint: Corpus
-- [ ] Corpus measured, with real numbers replacing every estimate in the plan
-- [ ] Licence and citation present in README and dataset card
-- [ ] Decision taken on deleting the YouTube material in `data/raw/`
+### Checkpoint: Corpus - PASSED
+
+**Measured corpus (from `scripts/corpus_qa.py`):**
+
+| split | subset | utts | duration | mean |
+|---|---|---:|---:|---:|
+| test | lifecycle | 80 | 15m35s | 11.7s |
+| test | translation | 429 | 22m32s | 3.2s |
+| train | lifecycle | 316 | 1h04m25s | 12.2s |
+| train | translation | 1713 | 1h31m49s | 3.2s |
+| **test** | **all** | **509** | **38m07s** | 4.5s |
+| **train** | **all** | **2029** | **2h36m15s** | 4.6s |
+
+Total usable: **2,538 utterances / 3h14m22s**, 18 speakers. Train/test is 80/20 by
+duration. 46 excluded (45 longer than Whisper's 30s window, 1 under 0.2s).
+Duration p50 3.2s, p90 8.4s, p99 25.3s.
+
+- [x] Corpus measured; estimates replaced with real numbers
+- [x] Licence and citation present in README and dataset card
+- [x] YouTube material deleted; corpus is single-source
 - [ ] Review with human before spending GPU time
 
 ---

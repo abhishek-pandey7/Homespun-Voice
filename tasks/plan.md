@@ -117,8 +117,8 @@ repo scaffold + pinned env  (T1, T2)  [done]
 - [x] Task 2: Pinned Python environment with GPU verification
 
 ### Phase 1: Corpus
-- [ ] Task 3: Import the SpeeD-IA Awadhi corpus
-- [ ] Task 4: Corpus QA, normalisation and manifest
+- [x] Task 3: Import the SpeeD-IA Awadhi corpus
+- [x] Task 4: Corpus QA, normalisation and manifest
 
 ### Checkpoint: Corpus
 
