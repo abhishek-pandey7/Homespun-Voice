@@ -1,0 +1,31 @@
+# Python 3.12 only. Do not use the 3.14 interpreter on `py` — torch has no
+# stable wheels for it.
+#
+# torch must come from the CUDA 12.1 index, or pip silently installs the CPU
+# build and training falls back to CPU at ~50x slower with no error:
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121
+
+torch==2.5.1
+torchaudio==2.5.1
+
+# --- ASR + adaptation ---
+transformers==4.46.3
+peft==0.13.2
+accelerate==1.1.1
+datasets==3.1.0
+
+# --- audio handling ---
+soundfile==0.12.1
+librosa==0.10.2.post1
+silero-vad==5.1.2
+
+# --- evaluation ---
+jiwer==3.0.4
+
+# --- ingest ---
+yt-dlp>=2026.8.19
+
+# --- story + narration stages ---
+requests==2.32.3
+python-dotenv==1.0.1
+PyYAML==6.0.2

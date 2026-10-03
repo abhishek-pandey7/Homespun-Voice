@@ -2,134 +2,181 @@
 
 ## Overview
 
-Vocalia adapts open-weight speech recognition to a specific North Indian regional dialect so that spoken personal stories are transcribed as actually spoken, rather than normalised into standard Hindi. A parameter-efficient (LoRA) adapter is trained on a small, hand-corrected dialect corpus on top of `openai/whisper-small`, measured against the stock model on a held-out set, and then used to drive a readable storybook with synthesised narration and a small web reader.
+Vocalia adapts open-weight speech recognition to **Awadhi**, a low-resource Indo-Aryan
+dialect spoken across the Awadh region of Uttar Pradesh. General-purpose speech models
+transcribe Awadhi by quietly translating it: local vocabulary becomes standard Hindi,
+idiom is dropped, and the way people actually speak is flattened into newscaster
+register. For dictation that scarcely matters. For recording how elders describe birth
+customs, naming ceremonies and family tradition, it means the transcript is not what
+was said.
 
-The project is deliberately two things at once: a measurable ASR experiment (does the adapter actually help, and by how much) and a usable artifact (a story someone can read and listen to). The plan keeps those separable, so that a weak benchmark result does not invalidate the artifact, and a polished artifact cannot paper over a weak benchmark.
+A LoRA adapter is trained on `openai/whisper-small` over the **SpeeD-IA Awadhi corpus**,
+measured against the stock model on the corpus authors' own held-out split, and then
+used to drive a readable, narrated storybook of the life-cycle narratives the corpus
+contains.
+
+The project is two separable things: a reproducible ASR experiment, and a usable
+artifact. Neither is allowed to prop up the other — a weak benchmark is reported as a
+weak benchmark, and a polished reader does not stand in for a result.
+
+## Corpus
+
+**SpeeD-IA** (Speech Datasets for Indo-Aryan languages), Dr. Bhimrao Ambedkar University
+and the Council for Strategic and Defence Research, with Karya Inc. and UnReaL-TecE LLP.
+Published at the Speech for Social Good Workshop, Interspeech 2022.
+
+- Transcriptions: `github.com/unrealtecellp/SpeeD-IA`
+- Audio: Google Drive folder linked from that repository
+- Licence: **CC BY-NC-SA 4.0** — attribution, non-commercial, share-alike
+
+| Subset | train | test | total |
+|---|---|---|---|
+| lifecycle | 357 | 90 | 447 |
+| translation | 1,713 | 429 | 2,142 |
+| **total utterances** | **2,070** | **519** | **2,589** |
+
+Audio arrives pre-segmented: one WAV plus one JSON per utterance, grouped by speaker.
+
+### Why this corpus rather than scraped video
+
+Three things it settles at once. The transcriptions already exist, which removes the
+single largest risk in the original plan — hours of manual correction producing perhaps
+25 minutes of labelled audio. The split is defined by the corpus authors, so results are
+comparable to published work rather than to a split invented here. And the licence is
+explicit and citable, so provenance is a fact in the manifest rather than an assumption.
+
+### Licence obligations
+
+CC BY-NC-SA 4.0 is not decorative. Three consequences the project must honour:
+
+- **Attribution** — the Interspeech 2022 paper is cited in the README, the dataset card,
+  the reader UI and any write-up.
+- **Non-commercial** — the adapter and the artifact are not sold or used commercially.
+- **Share-alike** — a model fine-tuned on this data, and a storybook derived from its
+  transcripts, are both derivative works. Each carries CC BY-NC-SA 4.0. This is stated
+  up front rather than discovered at publication.
 
 ## Architecture Decisions
 
-- **Train locally, not on hosted notebooks.** The machine has an RTX 4050 (6 GB VRAM). `whisper-small` is 244M params; a LoRA adapter on `q_proj`/`v_proj` in fp16 with batch size 2-4 and gradient accumulation fits inside 6 GB. This removes hosted-notebook session timeouts and dataset re-upload friction. A notebook is kept as a fallback path, not the primary one.
-- **Python 3.12, pinned.** Python 3.14 is installed as `py`, but torch has no stable wheels for it. All tooling targets the 3.12 interpreter explicitly.
-- **Walking skeleton before bulk labelling.** The first vertical slice pushes roughly 3 minutes of audio through every stage (ingest, VAD, draft STT, metric) before significant human transcription effort is spent. Labelling is the most expensive and least reversible input; the pipeline must be proven to consume it correctly first.
-- **Single dialect target: rural UP/Bihar Hindi.** Decided. Awadhi and Bhojpuri are out of scope; splitting ~25 minutes across three varieties would leave too little signal per variety to move the metric.
-- **Two speakers, multiple sessions each.** The corpus comes from two speakers in their seventies (one man, one woman) from rural UP. Recording several shorter sessions per speaker rather than one long one per speaker is a deliberate choice: it allows a held-out split where each test session shares a speaker with training, so the benchmark isolates dialect adaptation instead of speaker and room change.
-- **Metric plumbing before the model.** The evaluation harness is built and exercised on a tiny hand-corrected sample early, so that the WER/CER numbers reported later come from code already known to work.
-- **Split by recording, never by chunk.** Chunks from one recording share speaker, microphone and room. A random chunk-level split would leak and inflate the result.
-- **Verbatim quote preservation is a hard constraint on the story engine.** Gemma 2 may structure, order and connect, but dialect utterances it is asked to preserve must be copied exactly. A generation step that silently "corrects" dialect would undo the entire point of the fine-tune.
-- **Static frontend with prebuilt assets.** The storybook reader ships as static HTML/JS with audio generated ahead of time, so the hosted surface has no cold-start behaviour and no API keys in the deployed artifact.
-- **Secrets never enter the repo.** API keys live in a local `.env` that is gitignored, and in the host's environment settings.
+- **Train locally.** RTX 4050 (6 GB). `whisper-small` is 244M params; a LoRA adapter on
+  `q_proj`/`v_proj` in fp16 with batch 2-4 and gradient accumulation fits. No hosted
+  notebook, no session timeouts, no dataset re-upload.
+- **Python 3.12, pinned.** The 3.14 interpreter on `py` has no stable torch wheels.
+- **No VAD stage.** The original plan chunked long recordings with Silero VAD. SpeeD-IA
+  ships one file per utterance, already segmented by the collection app, so that stage
+  is removed rather than kept as ceremony. Utterances exceeding Whisper's 30-second
+  window are reported and excluded, not re-split.
+- **The authors' split is used verbatim.** Re-splitting would break comparability and
+  risk leaking a speaker across the boundary.
+- **Metric plumbing before the model.** The evaluation harness is built and proven
+  against the stock model before any adapter exists, so the numbers later come from code
+  already known to work.
+- **Baseline is measured on the real test set, once, and frozen.** It is the number the
+  adapter must beat.
+- **Verbatim quote preservation is a hard constraint on the story engine.** Gemma 2 may
+  structure and connect; quoted Awadhi is copied exactly and checked programmatically. A
+  generation step that silently normalises dialect would undo the entire point.
+- **Static frontend, prebuilt audio.** No cold start, no keys in the deployed artifact.
+- **Secrets never enter the repo.** Keys live in a gitignored `.env`.
 
 ## Dependency Graph
 
 ```
-repo scaffold + pinned env  (T1, T2)
+repo scaffold + pinned env  (T1, T2)  [done]
         |
         v
-  audio ingest (T3)
+  corpus import (T3)
         |
         v
-  VAD chunking (T4)
+  corpus QA + manifest (T4)
         |
         +-------------------+
         v                   v
- draft STT (T5)      eval harness (T6)
-        |                   |
+ baseline STT (T5)   eval harness (T6)
         +---------+---------+
                   v
-         correction tooling (T7)
+         baseline frozen (T6)
                   v
-       gold dataset + split (T8)
+         LoRA fine-tune (T7)
                   v
-         LoRA fine-tune (T9)
+      benchmark baseline vs tuned (T8)
                   v
-      benchmark baseline vs tuned (T10)
+        story engine / Gemma 2 (T9)
                   v
-        story engine / Gemma 2 (T11)
+       narration / ElevenLabs (T10)
                   v
-       narration / ElevenLabs (T12)
+         storybook reader (T11)
                   v
-         storybook frontend (T13)
-                  v
-            deployment (T14)
+            deployment (T12)
 ```
-
-T6 depends only on T4 plus a few manually corrected chunks, so it can be built in parallel with T5.
 
 ## Task List
 
 ### Phase 0: Foundation
 - [x] Task 1: Repository scaffold and ignore rules
-- [ ] Task 2: Pinned Python environment with GPU verification
+- [x] Task 2: Pinned Python environment with GPU verification
 
-### Checkpoint: Foundation
+### Phase 1: Corpus
+- [ ] Task 3: Import the SpeeD-IA Awadhi corpus
+- [ ] Task 4: Corpus QA, normalisation and manifest
 
-### Phase 1: Walking Skeleton (~3 minutes of audio)
-- [ ] Task 3: Audio ingest to 16 kHz mono WAV with a source manifest
-- [ ] Task 4: Silero VAD chunking to 5-25s segments
+### Checkpoint: Corpus
+
+### Phase 2: Baseline and Measurement
 - [ ] Task 5: Baseline transcription with stock whisper-small
-- [ ] Task 6: WER/CER evaluation harness
+- [ ] Task 6: WER/CER evaluation harness and frozen baseline
 
-### Checkpoint: Skeleton
+### Checkpoint: Baseline
 
-### Phase 2: Gold-Standard Dataset
-- [ ] Task 7: Transcript correction tool
-- [ ] Task 8: Corrected corpus with leakage-safe train/test split
-
-### Checkpoint: Dataset Frozen
-
-### Phase 3: Adaptation and Measurement
-- [ ] Task 9: LoRA fine-tune of whisper-small
-- [ ] Task 10: Baseline vs adapted benchmark report
+### Phase 3: Adaptation
+- [ ] Task 7: LoRA fine-tune of whisper-small
+- [ ] Task 8: Baseline vs adapted benchmark report
 
 ### Checkpoint: Benchmark
 
 ### Phase 4: Story and Narration
-- [ ] Task 11: Gemma 2 story engine with verbatim quote preservation
-- [ ] Task 12: ElevenLabs narration for finalised chapters
+- [ ] Task 9: Gemma 2 story engine with verbatim quote preservation
+- [ ] Task 10: ElevenLabs narration
 
 ### Phase 5: Reader and Deployment
-- [ ] Task 13: Static storybook reader
-- [ ] Task 14: Deployment to Render
+- [ ] Task 11: Static storybook reader
+- [ ] Task 12: Deployment to Render
 
 ### Checkpoint: Complete
 
-Full task detail, acceptance criteria and verification steps are in `tasks/todo.md`.
+Per-task acceptance criteria and verification steps are in `tasks/todo.md`.
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| ~25 min of labelled audio is very small for ASR adaptation; WER may barely move or regress | **High** | Treat the measurement as the deliverable, not a guaranteed win. Report CER alongside WER (more sensitive at this scale) plus a dialect-vocabulary recall count. Freeze the test set before training. Publish the honest number either way. |
-| Overfitting to a handful of recordings | High | Low LR (1e-4), `q_proj`/`v_proj` only, early stopping on held-out loss, small adapter rank (r=8-16). |
-| Held-out recording differs in speaker or room, so the split measures domain shift rather than dialect gain | High | Prefer multiple recordings per speaker so at least one test recording shares a speaker with train. Report per-recording WER, never a single pooled number. |
-| Manual correction of 25 min is the schedule bottleneck (realistically 6-10x audio duration) | High | Build T7 tooling before labelling; support Devanagari input; allow partial progress and resume. Scope down to 15 min if time runs short, and record that in the dataset card. |
-| 6 GB VRAM OOM during training | Medium | fp16, batch 2 with gradient accumulation, gradient checkpointing, freeze the encoder if needed. Notebook fallback retained. |
-| ElevenLabs Devanagari pronunciation quality on dialect text | Medium | Audition voices early in T12. Fall back to narrating a lightly standardised variant while keeping dialect text on screen verbatim. |
-| `gemma-2-9b-it` too heavy for 6 GB local inference | Medium | Use a hosted endpoint for 9b, or run `gemma-2-2b-it` locally. Decide in T11. |
-| Story engine silently normalises dialect quotes | Medium | Programmatic check: every quoted span in the output must appear verbatim in the source transcript, otherwise the step fails. |
-| Source audio licensing and consent | Medium | Record a consenting speaker directly where possible. Otherwise keep a provenance manifest with URL, channel and licence per source, and do not redistribute raw audio in the repo. |
+| Whisper's tokeniser has no Awadhi language id; forcing `hi` may cap achievable WER | **High** | Fix the language hint to `hi` for both baseline and adapted runs so the comparison stays fair; report it as a known ceiling rather than tuning it per-model. |
+| Baseline WER on Awadhi may be so high (>80%) that the metric is noisy | High | Report CER alongside WER — it degrades more gracefully. Include a dialect-vocabulary recall count as a third, more interpretable measure. |
+| `translation` and `lifecycle` subsets may differ in register and difficulty | Medium | Score them separately as well as pooled; never report one blended number. |
+| Audio may vary in sample rate or channel count across speakers | Medium | T4 normalises everything to 16 kHz mono and reports any file that needed conversion. |
+| Utterances longer than 30s silently truncate in Whisper | Medium | T4 flags and excludes them, with the count recorded in the dataset card. |
+| 6 GB VRAM OOM during training | Medium | fp16, batch 2 with gradient accumulation, gradient checkpointing, encoder freeze if needed. |
+| Google Drive throttles or partially completes the bulk download | Medium | `--continue` resumes; T4 verifies every transcript ID has a matching audio file and reports gaps rather than training on a silently short corpus. |
+| Share-alike obligations overlooked at publication | Medium | Licence terms recorded in README, dataset card and reader UI during T4, not at the end. |
+| ElevenLabs Devanagari pronunciation on Awadhi text | Medium | Audition one chapter before the full run; fall back to narrating a standardised variant while on-screen text stays verbatim. |
+| Story engine normalises dialect quotes | Medium | Programmatic verbatim check; failures block the write. |
 
 ## Open Questions
 
-**Resolved:**
-
-- *Dialect target:* rural UP/Bihar Hindi.
-- *Speakers:* two, approximately 70 years old, one man and one woman, from rural UP. Recorded directly with consent rather than sourced from public video, which also settles provenance and licensing.
-
-**Still open:**
-
-1. **Session structure for recording.** The plan assumes 6 sessions of roughly 5-8 minutes, 3 per speaker, so that train holds 2 sessions per speaker and test holds 1 per speaker. Fewer, longer sessions would weaken the split. Confirm this is practical with the speakers before T3.
-2. **Gemma 2 size and host:** `gemma-2-2b-it` locally, or `gemma-2-9b-it` via a hosted endpoint? Affects T11 only; can be deferred to Phase 4.
-3. **How much audio can realistically be hand-corrected?** This sets the ceiling on everything downstream. Expect 6-10x the audio duration in effort, so 25 minutes is a 3-4 hour sitting. An honest number now is worth more than an optimistic one.
-
-**Recording notes (elderly speakers, affects T3 quality):** quiet room with no fan, TV or background conversation; phone or mic within about 30 cm; one speaker at a time with no overlapping speech; prompt with open questions about memory and let them talk uninterrupted. Record at the highest quality the device offers and downsample later — resampling down is lossless in effect, upsampling recovers nothing.
+1. **Gemma 2 size and host:** `gemma-2-2b-it` locally, or `gemma-2-9b-it` via a hosted
+   endpoint? Affects T9 only; deferrable to Phase 4.
+2. **Story source subset:** the `lifecycle` narratives (birth customs, naming ceremonies,
+   tradition) are the natural storybook material. `translation` utterances are likely
+   prompted sentences rather than narrative. Confirm after T4 inspection.
+3. **Fate of the YouTube material** already in `data/raw/` (77m53s, five sessions). It is
+   not needed now. Recommendation: delete it, and keep the corpus single-source and
+   cleanly licensed.
 
 ## Definition of Done (project-wide)
 
-Every task clears this bar before it counts as done:
-
 - Code runs end to end from a clean checkout by following `README.md`.
 - Scripts are re-runnable and idempotent; re-running does not corrupt prior output.
-- No secrets, raw audio, or model weights committed.
+- No secrets, audio, or model weights committed.
 - Every data-producing stage writes a manifest recording what it produced and from what.
-- Reported metrics are reproducible from a committed script plus the frozen test set.
+- Reported metrics are reproducible from a committed script plus the corpus split.
+- Attribution and licence terms are present wherever the data or its derivatives appear.
