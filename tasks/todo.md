@@ -111,30 +111,30 @@ Duration p50 3.2s, p90 8.4s, p99 25.3s.
 - [x] Corpus measured; estimates replaced with real numbers
 - [x] Licence and citation present in README and dataset card
 - [x] YouTube material deleted; corpus is single-source
-- [ ] Review with human before spending GPU time
+- [x] Review with human before spending GPU time
 
 ---
 
 ## Phase 2: Baseline and Measurement
 
-## Task 5: Baseline transcription with stock whisper-small
+## Task 5: Baseline transcription with stock whisper-small - DONE
 
 **Description:** Transcribe the full test split with unmodified `openai/whisper-small`.
 This is the number the adapter must beat, and the evidence for how the stock model fails
 on Awadhi.
 
 **Acceptance criteria:**
-- [ ] `scripts/transcribe.py --model baseline --split test` writes `data/transcripts/baseline_test.jsonl`
-- [ ] Language hint fixed to `hi`, recorded in the output, identical for every later run
-- [ ] Greedy decoding, fixed seed — byte-identical output across runs
-- [ ] Runs on GPU; a CPU fallback warns loudly rather than proceeding quietly
-- [ ] Resumable after interruption
-- [ ] Throughput and total wall time logged
+- [x] `scripts/transcribe.py --model baseline --split test` writes `data/transcripts/baseline_test.jsonl`
+- [x] Language hint fixed to `hi`, recorded in the output, identical for every later run
+- [x] Greedy decoding, fixed seed — byte-identical output across runs
+- [x] Runs on GPU; a CPU fallback warns loudly rather than proceeding quietly
+- [x] Resumable after interruption
+- [x] Throughput and total wall time logged
 
 **Verification:**
-- [ ] Output row count equals test-split utterance count
-- [ ] Re-running produces byte-identical output
-- [ ] Manual check: transcripts are Devanagari and visibly mis-handle Awadhi vocabulary
+- [x] Output row count equals test-split utterance count
+- [x] Re-running produces byte-identical output
+- [x] Manual check: transcripts are Devanagari and visibly mis-handle Awadhi vocabulary
 
 **Dependencies:** Task 4
 
@@ -144,7 +144,7 @@ on Awadhi.
 
 ---
 
-## Task 6: WER/CER evaluation harness and frozen baseline
+## Task 6: WER/CER evaluation harness and frozen baseline - DONE
 
 **Description:** Score hypotheses against references with jiwer, broken out by subset and
 split, and freeze the baseline. Normalisation is explicit and applied identically to both
@@ -152,17 +152,17 @@ sides, since silent normalisation differences are the usual way ASR benchmarks b
 meaningless.
 
 **Acceptance criteria:**
-- [ ] `scripts/evaluate.py` takes reference and one or more hypothesis files, emits WER and CER
-- [ ] Breakdown by subset (`lifecycle`, `translation`) as well as pooled
-- [ ] Normalisation documented and shared by both sides: whitespace, punctuation, Devanagari digits
-- [ ] Results to `reports/eval_<timestamp>.json` plus a readable Markdown table
-- [ ] Baseline frozen to `reports/baseline.json`, never overwritten by later runs
+- [x] `scripts/evaluate.py` takes reference and one or more hypothesis files, emits WER and CER
+- [x] Breakdown by subset (`lifecycle`, `translation`) as well as pooled
+- [x] Normalisation documented and shared by both sides: whitespace, punctuation, Devanagari digits
+- [x] Results to `reports/eval_<timestamp>.json` plus a readable Markdown table
+- [x] Baseline frozen to `reports/baseline.json`, never overwritten by later runs
 
 **Verification:**
-- [ ] Scoring a reference against itself yields WER 0.0 and CER 0.0
-- [ ] A hypothesis with one known substituted word yields the hand-calculated WER
-- [ ] An empty hypothesis yields WER 1.0
-- [ ] Manual check: the table states which model produced each column
+- [x] Scoring a reference against itself yields WER 0.0 and CER 0.0
+- [x] A hypothesis with one known substituted word yields the hand-calculated WER
+- [x] An empty hypothesis yields WER 1.0
+- [x] Manual check: the table states which model produced each column
 
 **Dependencies:** Task 5
 
@@ -172,11 +172,26 @@ meaningless.
 
 ---
 
-### Checkpoint: Baseline
-- [ ] Baseline WER and CER known, frozen, reproducible
-- [ ] Harness proven by self-scoring and known-corruption tests
-- [ ] Qualitative failure examples collected for the write-up
-- [ ] Review with human
+### Checkpoint: Baseline - PASSED
+
+**Frozen baseline** (`reports/baseline.json`), stock whisper-small, 509 test utterances:
+
+| subset | utts | WER | CER |
+|---|---:|---:|---:|
+| lifecycle | 80 | 0.9762 | 0.6181 |
+| translation | 429 | 1.0592 | 0.6476 |
+| **all** | **509** | **1.0210** | **0.6335** |
+
+Dialect-marker recall: **36/709 = 5.1%**.
+
+WER exceeds 1.0 because the model inserts as well as substitutes - it hallucinates
+on longer clips. The metric is therefore saturated and CER is the more informative
+figure at this baseline. Throughput 4.5x realtime, 463s for 34.6 min of audio.
+
+- [x] Baseline WER and CER known, frozen, reproducible
+- [x] Harness proven by self-scoring and known-corruption tests
+- [x] Qualitative failure examples collected
+- [x] Review with human
 
 ---
 

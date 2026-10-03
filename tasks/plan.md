@@ -123,8 +123,8 @@ repo scaffold + pinned env  (T1, T2)  [done]
 ### Checkpoint: Corpus
 
 ### Phase 2: Baseline and Measurement
-- [ ] Task 5: Baseline transcription with stock whisper-small
-- [ ] Task 6: WER/CER evaluation harness and frozen baseline
+- [x] Task 5: Baseline transcription with stock whisper-small
+- [x] Task 6: WER/CER evaluation harness and frozen baseline
 
 ### Checkpoint: Baseline
 
