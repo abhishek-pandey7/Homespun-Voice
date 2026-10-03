@@ -168,9 +168,9 @@ Per-task acceptance criteria and verification steps are in `tasks/todo.md`.
 2. **Story source subset:** the `lifecycle` narratives (birth customs, naming ceremonies,
    tradition) are the natural storybook material. `translation` utterances are likely
    prompted sentences rather than narrative. Confirm after T4 inspection.
-3. **Fate of the YouTube material** already in `data/raw/` (77m53s, five sessions). It is
-   not needed now. Recommendation: delete it, and keep the corpus single-source and
-   cleanly licensed.
+3. ~~Fate of the YouTube material in `data/raw/`.~~ **Resolved: deleted.** The corpus is
+   now single-source and cleanly licensed. `scripts/ingest.py` is retained for importing
+   directly recorded audio should any be added later; no current task depends on it.
 
 ## Definition of Done (project-wide)
 
