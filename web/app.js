@@ -311,14 +311,18 @@ function renderSamples(m) {
     const box = el("div", "sample reveal");
     box.appendChild(el("p", "meta",
       `${s.duration_s.toFixed(1)}s · character error ${s.cer_baseline} to ${s.cer_adapted}`));
-    [["Said", "said", s.reference],
-     ["Before", "stock", trim(s.baseline, 170)],
-     ["After", "tuned", trim(s.adapted, 170)]].forEach(([tag, cls, text]) => {
-      const r = el("div", `row ${cls}`);
-      r.appendChild(el("span", "tag", tag));
-      r.appendChild(el("span", "val", text));
-      box.appendChild(r);
-    });
+    [["Said", "ref", s.reference, s.meaning ? `"${s.meaning}"` : ""],
+     ["Before", "stock", trim(s.baseline, 170), s.baseline_note],
+     ["After", "tuned", trim(s.adapted, 170), s.adapted_note]].forEach(
+      ([tag, cls, text, gloss]) => {
+        const r = el("div", `row ${cls}`);
+        r.appendChild(el("span", "tag", tag));
+        const v = el("span", "val");
+        v.appendChild(el("span", null, text));
+        if (gloss) v.appendChild(el("span", "gloss-line", gloss));
+        r.appendChild(v);
+        box.appendChild(r);
+      });
     root.appendChild(box);
   });
   observe(root.querySelectorAll(".reveal"));
