@@ -13,6 +13,13 @@
 const MODEL = "abhshkp/homespun-awadhi-web";
 const TARGET_SR = 16000;
 
+// Whisper's window is 30s, but int8 on WASM decodes slowly enough that a long
+// clip plus a repetition loop ran 280 seconds for 20 seconds of audio. Capping
+// the clip and the token budget bounds the worst case to something a visitor
+// will actually wait through.
+const MAX_SECONDS = 15;
+const MAX_TOKENS = 110;
+
 const el = (t, c, x) => {
   const n = document.createElement(t);
   if (c) n.className = c;
@@ -191,6 +198,40 @@ async function ensureModel() {
   }
 }
 
+/* Say plainly when the output has degenerated, rather than leaving a wall of
+   one repeated syllable looking like a transcription. */
+function describeLoop(text) {
+  const words = text.split(/\s+/).filter(Boolean);
+
+  const say = (unit) =>
+    `That is the model looping on "${unit}" rather than transcribing. It does ` +
+    "that on audio unlike what it learned from: a clean studio voice, a " +
+    "language it has never heard, or near silence.";
+
+  // Spaced repetition: one token dominating the line.
+  if (words.length >= 6) {
+    const counts = {};
+    for (const w of words) counts[w] = (counts[w] || 0) + 1;
+    const [token, n] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    if (n >= 5 && n / words.length > 0.4) return say(token);
+  }
+
+  // Run-on repetition: no spaces at all, one syllable repeated. Written as a
+  // scan rather than a backreference regex, which is easy to mangle and hard
+  // to read back.
+  const flat = text.replace(/\s+/g, "");
+  for (let len = 1; len <= 6; len++) {
+    if (flat.length < len * 6) break;
+    for (let start = 0; start + len * 6 <= flat.length; start++) {
+      const unit = flat.slice(start, start + len);
+      let reps = 1;
+      while (flat.startsWith(unit, start + reps * len)) reps += 1;
+      if (reps >= 6 && (reps * len) / flat.length > 0.35) return say(unit);
+    }
+  }
+  return "";
+}
+
 async function decodeToMono16k(blobOrFile) {
   const buf = await blobOrFile.arrayBuffer();
   const ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: TARGET_SR });
@@ -217,14 +258,35 @@ async function runOn(blobOrFile, label) {
   out.textContent = "";
 
   try {
-    const audio = await decodeToMono16k(blobOrFile);
+    let audio = await decodeToMono16k(blobOrFile);
+    const full = audio.length / TARGET_SR;
+    const clipped = full > MAX_SECONDS;
+    if (clipped) audio = audio.slice(0, MAX_SECONDS * TARGET_SR);
     const seconds = audio.length / TARGET_SR;
+
     const t0 = performance.now();
-    const result = await model(audio, { language: "hi", task: "transcribe" });
+    const result = await model(audio, {
+      language: "hi",
+      task: "transcribe",
+      max_new_tokens: MAX_TOKENS,
+      // These two are not used for the published benchmark, where both models
+      // decode greedily so the adapter is the only variable. Here there is no
+      // comparison to protect, and without them an out-of-domain clip locks
+      // into one syllable and spends the whole token budget on it.
+      repetition_penalty: 1.25,
+      no_repeat_ngram_size: 3,
+    });
     const took = (performance.now() - t0) / 1000;
 
-    out.appendChild(el("p", "live-text", (result.text || "").trim() || "(nothing recognised)"));
-    setStatus(`${label}: ${seconds.toFixed(1)}s of audio in ${took.toFixed(1)}s, in your browser.`, "ok");
+    const text = (result.text || "").trim();
+    out.appendChild(el("p", "live-text", text || "(nothing recognised)"));
+
+    const loop = describeLoop(text);
+    if (loop) out.appendChild(el("p", "live-note", loop));
+
+    let note = `${label}: ${seconds.toFixed(1)}s of audio in ${took.toFixed(1)}s, in your browser.`;
+    if (clipped) note += ` Only the first ${MAX_SECONDS}s was transcribed.`;
+    setStatus(note, "ok");
   } catch (err) {
     setStatus(`Could not transcribe that: ${err.message}`, "bad");
     console.error(err);

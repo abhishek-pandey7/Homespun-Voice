@@ -573,3 +573,14 @@ body::before { z-index: 3; }
 .wave.live { height: 2.75rem; width: 100%; }
 .wave.live rect { fill: var(--rule); transition: none; }
 .wave.live rect.on { fill: var(--warn); }
+
+.live-note {
+  margin-top: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  background: var(--sunk);
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius);
+  font-size: 0.86rem;
+  color: var(--ink-2);
+}
+.live-text { word-break: break-word; overflow-wrap: anywhere; }
