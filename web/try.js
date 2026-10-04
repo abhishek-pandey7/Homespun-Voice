@@ -296,31 +296,69 @@ function buildWordwall() {
   wall.className = "wordwall";
   wall.setAttribute("aria-hidden", "true");
 
-  // Deterministic scatter from a small integer hash, so the layout is stable
-  // across loads and pages but is not the column grid that `i % 3` produced.
+  // Deterministic scatter with overlap rejection. Jitter alone was not enough:
+  // random placement clumps, and two overlapping Devanagari words turn into an
+  // unreadable smear rather than a texture.
   const rand = (seed) => {
     const x = Math.sin(seed * 12.9898) * 43758.5453;
     return x - Math.floor(x);
   };
 
-  for (let i = 0; i < 30; i++) {
-    const w = document.createElement("span");
-    w.textContent = WORDS[i % WORDS.length];
-    // Jitter a loose grid rather than placing at random: pure randomness
-    // clumps and leaves holes, a grid alone reads as a grid.
-    const cols = 4;
-    const cx = (i % cols) / cols;
-    const cy = Math.floor(i / cols) / Math.ceil(30 / cols);
-    w.style.left = `${(cx + (rand(i * 3 + 1) - 0.5) * 0.3) * 100}%`;
-    w.style.top = `${(cy + (rand(i * 3 + 2) - 0.5) * 0.22) * 100}%`;
-    w.style.fontSize = `${3.5 + rand(i * 3 + 3) * 8}rem`;
-    w.style.transform = `rotate(${(rand(i * 7 + 5) - 0.5) * 14}deg)`;
-    w.style.opacity = `${0.55 + rand(i * 11 + 9) * 0.65}`;
-    wall.appendChild(w);
+  const W = window.innerWidth || 1440;
+  const H = window.innerHeight || 900;
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const placed = [];
+  const GAP = 18; // keeps neighbours from touching, not just from intersecting
+
+  const fits = (box) => placed.every((p) =>
+    box.x + box.w + GAP < p.x || p.x + p.w + GAP < box.x ||
+    box.y + box.h + GAP < p.y || p.y + p.h + GAP < box.y);
+
+  let seed = 1;
+  for (let i = 0; i < WORDS.length * 2; i++) {
+    const text = WORDS[i % WORDS.length];
+    const size = (3 + rand(i * 5 + 2) * 7) * rem;
+    // Devanagari runs a little narrower than its point size per glyph, and
+    // matras add height above the line.
+    const w = text.length * size * 0.62;
+    const h = size * 1.35;
+    if (w > W * 0.9) continue;
+
+    let box = null;
+    for (let attempt = 0; attempt < 60; attempt++) {
+      seed += 1;
+      const candidate = {
+        x: rand(seed * 2) * (W - w),
+        y: rand(seed * 3 + 7) * (H - h),
+        w, h,
+      };
+      if (fits(candidate)) { box = candidate; break; }
+    }
+    if (!box) continue; // no room left; a sparser wall beats a smeared one
+
+    placed.push(box);
+    const span = document.createElement("span");
+    span.textContent = text;
+    span.style.left = `${(box.x / W) * 100}%`;
+    span.style.top = `${(box.y / H) * 100}%`;
+    span.style.fontSize = `${size / rem}rem`;
+    span.style.transform = `rotate(${(rand(i * 7 + 5) - 0.5) * 10}deg)`;
+    span.style.opacity = `${0.6 + rand(i * 11 + 9) * 0.6}`;
+    wall.appendChild(span);
   }
 
   document.body.appendChild(wall);
 }
+
+let wallTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(wallTimer);
+  wallTimer = setTimeout(() => {
+    const old = document.querySelector(".wordwall");
+    if (old) old.remove();
+    buildWordwall();
+  }, 250);
+});
 
 function setupTheme() {
   let saved = null;
