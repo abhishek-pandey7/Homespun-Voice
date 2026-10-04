@@ -153,7 +153,6 @@ function renderExamples(data) {
 let transcriber = null;
 let loading = false;
 let backend = "wasm";
-let TextStreamerCls = null;
 
 const setStatus = (text, cls) => {
   const s = document.getElementById("live-status");
@@ -171,11 +170,9 @@ async function ensureModel() {
   setStatus("Downloading the model. This happens once; your browser caches it.");
 
   try {
-    const lib = await import(
+    const { pipeline, env } = await import(
       "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2"
     );
-    const { pipeline, env } = lib;
-    TextStreamerCls = lib.TextStreamer || null;
     env.allowLocalModels = false;
 
     // WASM was running about fourteen times slower than real time, which is
@@ -293,29 +290,19 @@ async function runOn(blobOrFile, label) {
     if (clipped) audio = audio.slice(0, MAX_SECONDS * TARGET_SR);
     const seconds = audio.length / TARGET_SR;
 
-    // Stream tokens into the box as they decode. On CPU this is the difference
-    // between a blank panel for a minute and visible progress.
-    const live = el("p", "live-text", "");
+    // Token streaming was tried here and removed. The TextStreamer handed the
+    // tokenizer an empty id array partway through and threw
+    // "token_ids must be a non-empty array of integers", leaking a partial
+    // mis-decode into the output box before failing. A correct answer after a
+    // wait beats a live one that breaks.
+    const live = el("p", "live-text", "Transcribing...");
     out.appendChild(live);
-    let streamer;
-    if (TextStreamerCls && model.tokenizer) {
-      try {
-        streamer = new TextStreamerCls(model.tokenizer, {
-          skip_prompt: true,
-          skip_special_tokens: true,
-          callback_function: (chunk) => { live.textContent += chunk; },
-        });
-      } catch (err) {
-        console.warn("streaming unavailable:", err.message);
-      }
-    }
 
     const t0 = performance.now();
     const result = await model(audio, {
       language: "hi",
       task: "transcribe",
       max_new_tokens: MAX_TOKENS,
-      ...(streamer ? { streamer } : {}),
       // These two are not used for the published benchmark, where both models
       // decode greedily so the adapter is the only variable. Here there is no
       // comparison to protect, and without them an out-of-domain clip locks
