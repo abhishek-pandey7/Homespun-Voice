@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 MANIFEST = Path("data/speedia/manifest.jsonl")
 CONFIG = Path("configs/lora.yaml")
-OUT = Path("models/vocalia-lora")
+OUT = Path("models/homespun-lora")
 LOG = Path("reports/train_log.jsonl")
 
 
@@ -66,7 +66,7 @@ def main() -> int:
         WhisperProcessor,
     )
 
-    from vocalia.train import (
+    from homespun.train import (
         MAX_LABEL_TOKENS,
         SpeechCollator,
         SpeechDataset,

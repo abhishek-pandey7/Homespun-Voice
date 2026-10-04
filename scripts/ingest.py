@@ -35,7 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from vocalia.manifest import has_id, upsert_row  # noqa: E402
+from homespun.manifest import has_id, upsert_row  # noqa: E402
 
 RAW_DIR = Path("data/raw")
 MANIFEST = RAW_DIR / "manifest.jsonl"

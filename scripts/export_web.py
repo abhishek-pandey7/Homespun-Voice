@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import jiwer  # noqa: E402
 
-from vocalia.metrics import normalise, score, vocabulary_recall  # noqa: E402
+from homespun.metrics import normalise, score, vocabulary_recall  # noqa: E402
 
 MANIFEST = Path("data/speedia/manifest.jsonl")
 STORY = Path("data/story/chapters.json")

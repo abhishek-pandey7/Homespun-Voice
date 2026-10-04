@@ -1,4 +1,4 @@
-# Vocalia
+# Homespun
 
 Speech recognition that keeps a dialect intact.
 
@@ -10,7 +10,7 @@ register. For dictation that scarcely matters. For recording how elders describe
 birth customs, naming ceremonies and family tradition, it means the transcript is
 not what was said.
 
-Vocalia trains a LoRA adapter on `openai/whisper-small` over a real Awadhi speech
+Homespun trains a LoRA adapter on `openai/whisper-small` over a real Awadhi speech
 corpus, measures whether it helps against the stock model on the corpus authors'
 own held-out split, and turns the corrected transcripts into a readable, narrated
 storybook.
@@ -89,7 +89,7 @@ script, and the number is published whichever way it falls.
 ## Layout
 
 ```
-src/vocalia/      library code
+src/homespun/      library code
 scripts/          runnable pipeline stages
 configs/          training hyperparameters
 prompts/          prompt templates (committed, not inlined)

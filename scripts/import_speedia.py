@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from vocalia.speedia import (  # noqa: E402
+from homespun.speedia import (  # noqa: E402
     index_audio,
     join,
     read_transcripts,

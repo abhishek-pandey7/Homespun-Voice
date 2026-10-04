@@ -1,4 +1,4 @@
-/* Vocalia reader.
+/* Homespun reader.
  *
  * Static page, no backend. Everything is read from web/data/*.json, written by
  * scripts/export_web.py. The page must still render something useful when the
@@ -32,7 +32,7 @@ function renderStory(story) {
 
   if (story.title) document.getElementById("title").textContent = story.title;
   if (story.subtitle) document.getElementById("subtitle").textContent = story.subtitle;
-  document.title = story.title || "Vocalia";
+  document.title = story.title || "Homespun";
 
   (story.chapters || []).forEach((chapter, i) => {
     const section = el("section", "chapter");

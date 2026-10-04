@@ -1,4 +1,4 @@
-# Vocalia — Task List
+# Homespun — Task List
 
 Plan document: `tasks/plan.md`
 Corpus: SpeeD-IA Awadhi (CC BY-NC-SA 4.0), Interspeech 2022
@@ -55,7 +55,7 @@ tree. The join is on utterance ID, which appears both as the WAV filename and as
 
 **Dependencies:** Task 2
 
-**Files likely touched:** `scripts/import_speedia.py`, `src/vocalia/speedia.py`, `data/speedia/`
+**Files likely touched:** `scripts/import_speedia.py`, `src/homespun/speedia.py`, `data/speedia/`
 
 **Estimated scope:** M
 
@@ -85,7 +85,7 @@ downstream may run on an unmeasured corpus.
 
 **Dependencies:** Task 3
 
-**Files likely touched:** `scripts/corpus_qa.py`, `src/vocalia/audio.py`, `data/speedia/manifest.jsonl`, `data/speedia/DATASET_CARD.md`
+**Files likely touched:** `scripts/corpus_qa.py`, `src/homespun/audio.py`, `data/speedia/manifest.jsonl`, `data/speedia/DATASET_CARD.md`
 
 **Estimated scope:** M
 
@@ -138,7 +138,7 @@ on Awadhi.
 
 **Dependencies:** Task 4
 
-**Files likely touched:** `scripts/transcribe.py`, `src/vocalia/asr.py`, `data/transcripts/baseline_test.jsonl`
+**Files likely touched:** `scripts/transcribe.py`, `src/homespun/asr.py`, `data/transcripts/baseline_test.jsonl`
 
 **Estimated scope:** M
 
@@ -166,7 +166,7 @@ meaningless.
 
 **Dependencies:** Task 5
 
-**Files likely touched:** `scripts/evaluate.py`, `src/vocalia/metrics.py`, `reports/baseline.json`
+**Files likely touched:** `scripts/evaluate.py`, `src/homespun/metrics.py`, `reports/baseline.json`
 
 **Estimated scope:** M
 
@@ -203,7 +203,7 @@ figure at this baseline. Throughput 4.5x realtime, 463s for 34.6 min of audio.
 - [x] `scripts/train_lora.py` uses PEFT targeting `["q_proj", "v_proj"]`, lr 1e-4, rank 8-16
 - [x] Fits in 6 GB using fp16, batch 2-4, gradient accumulation; peak VRAM logged
 - [x] A validation slice held out of train — the test split is never seen during training
-- [x] Adapter saves to `models/vocalia-lora/` (gitignored)
+- [x] Adapter saves to `models/homespun-lora/` (gitignored)
 - [x] Per-epoch train and validation loss logged to `reports/train_log.jsonl`
 - [x] Hyperparameters read from `configs/lora.yaml`, not hardcoded
 
@@ -216,7 +216,7 @@ figure at this baseline. Throughput 4.5x realtime, 463s for 34.6 min of audio.
 
 **Dependencies:** Task 6
 
-**Files likely touched:** `scripts/train_lora.py`, `src/vocalia/train.py`, `configs/lora.yaml`
+**Files likely touched:** `scripts/train_lora.py`, `src/homespun/train.py`, `configs/lora.yaml`
 
 **Estimated scope:** M
 
@@ -265,7 +265,7 @@ runaway tokens the adapted model terminates.
 | 3 epochs | 0.6967 | 0.3960 | 40.6% | 0.5419 | 0.2626 |
 | **6 epochs** | **0.6236** | **0.3564** | **45.3%** | **0.4993** | **0.2257** |
 
-6 epochs adopted as primary (`models/vocalia-lora-6ep`, 8.7 MB, 52 min, val loss
+6 epochs adopted as primary (`models/homespun-lora-6ep`, 8.7 MB, 52 min, val loss
 0.5723). vs baseline: WER -38.9%, CER -43.7%, markers 5.1% -> 45.3%.
 
 **Open limitations:**

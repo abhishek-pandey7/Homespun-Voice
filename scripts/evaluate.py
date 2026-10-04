@@ -23,7 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from vocalia.metrics import NORMALISATION, score, vocabulary_recall  # noqa: E402
+from homespun.metrics import NORMALISATION, score, vocabulary_recall  # noqa: E402
 
 REPORTS = Path("reports")
 

@@ -116,7 +116,7 @@ def check_imports() -> bool:
 
 
 def main() -> int:
-    print("Vocalia environment check\n")
+    print("Homespun environment check\n")
     results = [
         check_python(),
         check_torch(),

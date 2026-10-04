@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import jiwer  # noqa: E402
 
-from vocalia.metrics import NORMALISATION, normalise, score, vocabulary_recall  # noqa: E402
+from homespun.metrics import NORMALISATION, normalise, score, vocabulary_recall  # noqa: E402
 
 TRANSCRIPTS = Path("data/transcripts")
 OUT = Path("reports/benchmark.md")

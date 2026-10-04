@@ -6,7 +6,7 @@
 
 services:
   - type: web
-    name: vocalia
+    name: homespun
     runtime: static
     staticPublishPath: ./web
     buildCommand: ""

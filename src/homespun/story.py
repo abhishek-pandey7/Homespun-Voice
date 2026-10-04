@@ -139,7 +139,7 @@ def assemble(plan: dict[str, Any], sources: dict[str, str]) -> dict[str, Any]:
                 "entries": entries,
             })
     return {
-        "title": plan.get("title", "Vocalia"),
+        "title": plan.get("title", "Homespun"),
         "subtitle": plan.get("subtitle", ""),
         "chapters": chapters,
     }

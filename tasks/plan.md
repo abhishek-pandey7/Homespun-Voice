@@ -1,8 +1,8 @@
-# Implementation Plan: Vocalia
+# Implementation Plan: Homespun
 
 ## Overview
 
-Vocalia adapts open-weight speech recognition to **Awadhi**, a low-resource Indo-Aryan
+Homespun adapts open-weight speech recognition to **Awadhi**, a low-resource Indo-Aryan
 dialect spoken across the Awadh region of Uttar Pradesh. General-purpose speech models
 transcribe Awadhi by quietly translating it: local vocabulary becomes standard Hindi,
 idiom is dropped, and the way people actually speak is flattened into newscaster

@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 MANIFEST = Path("data/speedia/manifest.jsonl")
 OUT_DIR = Path("data/transcripts")
-ADAPTER = Path("models/vocalia-lora")
+ADAPTER = Path("models/homespun-lora")
 
 
 def load_manifest(path: Path, split: str) -> list[dict]:
@@ -85,7 +85,7 @@ def main() -> int:
         print("[ok] nothing to do")
         return 0
 
-    from vocalia.asr import Transcriber  # imported late so --help stays instant
+    from homespun.asr import Transcriber  # imported late so --help stays instant
 
     adapter = args.adapter if args.model == "lora" else None
     if adapter and not Path(adapter).exists():
