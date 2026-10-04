@@ -369,6 +369,8 @@ footer a { color: var(--accent); text-underline-offset: 2px; }
 
 .examples-section, .live-section { padding: clamp(2.5rem, 6vw, 4rem) 0; }
 .live-section { border-top: 1px solid var(--rule); }
+.live-section.first { border-top: 0; padding-top: clamp(1rem, 3vw, 1.5rem); }
+.examples-section { border-top: 1px solid var(--rule); }
 .section-note.small { font-size: 0.85rem; margin-top: 2rem; }
 
 .example {
