@@ -17,8 +17,8 @@ const TARGET_SR = 16000;
 // clip plus a repetition loop ran 280 seconds for 20 seconds of audio. Capping
 // the clip and the token budget bounds the worst case to something a visitor
 // will actually wait through.
-const MAX_SECONDS = 15;
-const MAX_TOKENS = 110;
+const MAX_SECONDS = 30;   // Whisper's own window; no reason to cut shorter
+const MAX_TOKENS = 200;
 
 const el = (t, c, x) => {
   const n = document.createElement(t);
