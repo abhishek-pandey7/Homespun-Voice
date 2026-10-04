@@ -28,14 +28,23 @@ SAMPLE_RATE = 16_000
 
 @dataclass
 class DecodeConfig:
-    """Frozen decoding settings, recorded into every output file."""
+    """Decoding settings, recorded into every output file.
+
+    Whatever these are, both models get the same ones. The point of the
+    benchmark is the adapter, so decoding must not be a second variable.
+    """
 
     language: str = LANGUAGE
     task: str = TASK
-    num_beams: int = 1  # greedy: reproducible, and beams would differ per model
+    num_beams: int = 1
     do_sample: bool = False
     temperature: float = 0.0
     max_new_tokens: int = 200
+    # 0 disables. Whisper's characteristic failure on out-of-distribution audio
+    # is to lock into one syllable and emit it until the token limit; blocking
+    # repeated n-grams attacks that directly rather than hoping the model
+    # outgrows it.
+    no_repeat_ngram_size: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -46,6 +55,7 @@ class DecodeConfig:
             "do_sample": self.do_sample,
             "temperature": self.temperature,
             "max_new_tokens": self.max_new_tokens,
+            "no_repeat_ngram_size": self.no_repeat_ngram_size,
         }
 
 
@@ -94,12 +104,16 @@ class Transcriber:
             audio, sampling_rate=SAMPLE_RATE, return_tensors="pt"
         )
         features = inputs.input_features.to(self.device, self.model.dtype)
+        kwargs = {}
+        if self.config.no_repeat_ngram_size:
+            kwargs["no_repeat_ngram_size"] = self.config.no_repeat_ngram_size
         generated = self.model.generate(
             features,
             forced_decoder_ids=self.forced_ids,
             num_beams=self.config.num_beams,
             do_sample=self.config.do_sample,
             max_new_tokens=self.config.max_new_tokens,
+            **kwargs,
         )
         return [
             t.strip()

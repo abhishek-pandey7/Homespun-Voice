@@ -104,6 +104,15 @@ def build_model(cfg: dict):
     model.config.suppress_tokens = []
     model.generation_config.forced_decoder_ids = None
 
+    tr = cfg["training"]
+    if tr.get("spec_augment"):
+        # Masking spans of time and frequency during training only. For a small
+        # single-domain corpus this is the cheapest regularisation available,
+        # and it costs nothing at inference.
+        model.config.apply_spec_augment = True
+        model.config.mask_time_prob = tr.get("mask_time_prob", 0.05)
+        model.config.mask_feature_prob = tr.get("mask_feature_prob", 0.05)
+
     if cfg["training"]["gradient_checkpointing"]:
         model.config.use_cache = False
         # Reentrant checkpointing only records a graph for inputs that require

@@ -61,6 +61,10 @@ def main() -> int:
     ap.add_argument("--adapter", type=Path, default=ADAPTER)
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--batch-size", type=int, default=8)
+    ap.add_argument("--beams", type=int, default=1,
+                    help="beam width; must match across models being compared")
+    ap.add_argument("--no-repeat-ngram", type=int, default=0,
+                    help="block repeated n-grams of this size; 0 disables")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--force", action="store_true", help="ignore existing output")
     ap.add_argument("--label", default=None,
@@ -91,8 +95,12 @@ def main() -> int:
     if adapter and not Path(adapter).exists():
         sys.exit(f"error: adapter not found at {adapter} - run train_lora.py first")
 
+    from homespun.asr import DecodeConfig
+
+    cfg_in = DecodeConfig(num_beams=args.beams,
+                          no_repeat_ngram_size=args.no_repeat_ngram)
     print(f"loading model{' + adapter' if adapter else ''}...")
-    t = Transcriber(adapter_path=adapter)
+    t = Transcriber(adapter_path=adapter, config=cfg_in)
     cfg = t.describe()
     print(f"  {cfg['base_model']}  device={cfg['device']}  dtype={cfg['dtype']}  "
           f"lang={cfg['language']}  beams={cfg['num_beams']}")
