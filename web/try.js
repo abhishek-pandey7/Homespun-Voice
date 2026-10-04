@@ -115,8 +115,8 @@ function renderExamples(data) {
 
     const trim = (t) => (t.length > 180 ? t.slice(0, 180) + " ..." : t);
     [["Said", "ref", ex.reference],
-     ["Stock", "stock", trim(ex.baseline)],
-     ["Retrained", "tuned", trim(ex.adapted)]].forEach(([tag, cls, text]) => {
+     ["Before", "stock", trim(ex.baseline)],
+     ["After", "tuned", trim(ex.adapted)]].forEach(([tag, cls, text]) => {
       const row = el("div", `row ${cls}`);
       row.appendChild(el("span", "tag", tag));
       row.appendChild(el("span", "val", text));

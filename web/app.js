@@ -223,9 +223,9 @@ function renderFigures(m) {
   root.textContent = "";
   const rel = (a, b) => `${Math.round(((b - a) / a) * 100)}%`;
 
-  root.appendChild(figure("Word error rate", m.adapted.wer.toFixed(2),
+  root.appendChild(figure("Words wrong", m.adapted.wer.toFixed(2),
     m.baseline.wer.toFixed(2), rel(m.baseline.wer, m.adapted.wer)));
-  root.appendChild(figure("Character error rate", m.adapted.cer.toFixed(2),
+  root.appendChild(figure("Characters wrong", m.adapted.cer.toFixed(2),
     m.baseline.cer.toFixed(2), rel(m.baseline.cer, m.adapted.cer)));
 
   const mb = m.baseline.markers / m.baseline.markers_total;
@@ -238,30 +238,56 @@ function renderTable(m) {
   const root = document.getElementById("table-wrap");
   if (!root) return;
   root.textContent = "";
-  const t = el("table", "metrics");
 
-  const thead = el("thead");
-  const hr = el("tr");
-  ["", "Utterances", "Stock", "Retrained"].forEach((h) => hr.appendChild(el("th", null, h)));
-  thead.appendChild(hr);
-  t.appendChild(thead);
+  // Paired bars rather than a grid of digits: the job of this figure is the
+  // size of the drop, and a number cannot show a size. The digits stay as
+  // direct labels, which is also the secondary encoding the colour pair needs
+  // (its CVD separation sits in the 6-8 band, legal only when labelled).
+  const rows = [
+    ["Long answers", m.baseline.lifecycle, m.adapted.lifecycle],
+    ["Short sentences", m.baseline.translation, m.adapted.translation],
+    ["Everything", { cer: m.baseline.cer, utterances: m.test_utterances },
+                   { cer: m.adapted.cer }],
+  ];
+  const max = Math.max(...rows.flatMap(([, b, a2]) => [b.cer, a2.cer])) * 1.08;
 
-  const tb = el("tbody");
-  const row = (label, count, a, b) => {
-    const tr = el("tr");
-    tr.appendChild(el("td", null, label));
-    tr.appendChild(el("td", "num", String(count)));
-    tr.appendChild(el("td", "num", a.toFixed(4)));
-    tr.appendChild(el("td", "num win", b.toFixed(4)));
-    return tr;
-  };
-  tb.appendChild(row("Long narratives, CER", m.baseline.lifecycle.utterances,
-    m.baseline.lifecycle.cer, m.adapted.lifecycle.cer));
-  tb.appendChild(row("Short sentences, CER", m.baseline.translation.utterances,
-    m.baseline.translation.cer, m.adapted.translation.cer));
-  tb.appendChild(row("All, CER", m.test_utterances, m.baseline.cer, m.adapted.cer));
-  t.appendChild(tb);
-  root.appendChild(t);
+  const legend = el("div", "chart-legend");
+  [["before", "Before"], ["after", "After"]].forEach(([cls, label]) => {
+    const item = el("span");
+    item.appendChild(el("i", `swatch ${cls}`));
+    item.appendChild(el("span", null, label));
+    legend.appendChild(item);
+  });
+  root.appendChild(legend);
+
+  rows.forEach(([name, before, after]) => {
+    const row = el("div", "bar-row");
+
+    const head = el("div", "bar-head");
+    head.appendChild(el("span", "name", name));
+    head.appendChild(el("span", "n", `${before.utterances} recordings`));
+    row.appendChild(head);
+
+    [["before", before.cer], ["after", after.cer]].forEach(([cls, value]) => {
+      const bar = el("div", "bar");
+      const track = el("div", "track");
+      const fill = el("div", `fill ${cls}`);
+      fill.style.width = `${(value / max) * 100}%`;
+      track.appendChild(fill);
+      track.title = `${cls === "before" ? "Before" : "After"}: ${value.toFixed(4)} character error rate`;
+      bar.appendChild(track);
+      const v = el("span", "v");
+      if (cls === "after") v.appendChild(el("b", null, value.toFixed(3)));
+      else v.textContent = value.toFixed(3);
+      bar.appendChild(v);
+      row.appendChild(bar);
+    });
+    root.appendChild(row);
+  });
+
+  root.appendChild(el("p", "chart-note",
+    "Character error rate: the share of characters the model gets wrong. " +
+    "Lower is better, and shorter is better."));
 }
 
 function renderSamples(m) {
@@ -273,8 +299,8 @@ function renderSamples(m) {
     box.appendChild(el("p", "meta",
       `${s.duration_s.toFixed(1)}s · character error ${s.cer_baseline} to ${s.cer_adapted}`));
     [["Said", "said", s.reference],
-     ["Stock", "stock", trim(s.baseline, 170)],
-     ["Retrained", "tuned", trim(s.adapted, 170)]].forEach(([tag, cls, text]) => {
+     ["Before", "stock", trim(s.baseline, 170)],
+     ["After", "tuned", trim(s.adapted, 170)]].forEach(([tag, cls, text]) => {
       const r = el("div", `row ${cls}`);
       r.appendChild(el("span", "tag", tag));
       r.appendChild(el("span", "val", text));
