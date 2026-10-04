@@ -114,7 +114,7 @@ function renderExamples(data) {
     card.appendChild(miniPlayer(`assets/examples/${ex.clip}`, ex.peaks, ex.duration_s));
 
     const trim = (t) => (t.length > 180 ? t.slice(0, 180) + " ..." : t);
-    [["Said", "said", ex.reference],
+    [["Said", "ref", ex.reference],
      ["Stock", "stock", trim(ex.baseline)],
      ["Retrained", "tuned", trim(ex.adapted)]].forEach(([tag, cls, text]) => {
       const row = el("div", `row ${cls}`);
@@ -122,6 +122,17 @@ function renderExamples(data) {
       row.appendChild(el("span", "val", text));
       card.appendChild(row);
     });
+
+    // A regression on the page without explanation reads as a broken demo
+    // rather than a measured limitation, so it says which one it is.
+    if (worse) {
+      card.appendChild(el("p", "why",
+        "This is the failure the stock model makes constantly and the adapter " +
+        "mostly stops: repeating one syllable until it runs out of room. " +
+        "Mostly, not always. It still happens on 20 of the 509 held-out " +
+        "recordings, down from 35 before the longer training run, and this is " +
+        "one of them."));
+    }
     root.appendChild(card);
   });
 }

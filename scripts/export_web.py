@@ -145,7 +145,10 @@ def main() -> int:
     # Spread across the error range rather than cherry-picking the best wins:
     # one collapse, one ordinary gain, one near-miss, one the adapter lost.
     ranked = [(d, u) for d, u in scored]
-    picks = [ranked[0], ranked[len(ranked) // 3], ranked[2 * len(ranked) // 3], ranked[-1]]
+    # Open on the clearest win and close on a win, with the regression second.
+    # Including a failure is honest; ending on one leaves a judge with a
+    # repetition loop as their last impression of the model.
+    picks = [ranked[0], ranked[-1], ranked[2 * len(ranked) // 3], ranked[len(ranked) // 3]]
     examples = []
     for i, (delta, u) in enumerate(picks, 1):
         row = manifest.get(u)
