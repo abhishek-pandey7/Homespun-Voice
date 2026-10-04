@@ -116,7 +116,20 @@ def split_sentences(text: str) -> list[str]:
             merged[-1] = merged[-1] + " " + part
         else:
             merged.append(part)
-    return merged
+
+    # Some speakers run on for twenty seconds without a single danda, so
+    # punctuation alone leaves one enormous piece. Chop anything still too long
+    # into word-count windows: a clause boundary guessed wrong costs a clumsy
+    # seam, where no split at all costs the whole answer.
+    out: list[str] = []
+    for part in merged:
+        words = part.split()
+        if len(words) <= 28:
+            out.append(part)
+        else:
+            step = 20
+            out.extend(" ".join(words[i:i + step]) for i in range(0, len(words), step))
+    return out
 
 
 def translate_once(model, text: str, seen: set[str], retries: int) -> tuple[str, str]:
