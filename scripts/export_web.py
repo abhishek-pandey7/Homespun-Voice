@@ -18,6 +18,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+import numpy as np  # noqa: E402
+import soundfile as sf  # noqa: E402
+
 import jiwer  # noqa: E402
 
 from homespun.metrics import normalise, score, vocabulary_recall  # noqa: E402
@@ -36,6 +39,41 @@ DIALECT_MARKERS = {
 def load_jsonl(path: Path) -> list[dict]:
     with path.open(encoding="utf-8") as fh:
         return [json.loads(l) for l in fh if l.strip()]
+
+
+PEAKS = 96
+
+
+def waveform_peaks(path: Path, buckets: int = PEAKS) -> list[int]:
+    """Downsample a clip to N peak amplitudes, 0-100.
+
+    The reader draws these as its only illustration. Stock photography of
+    "rural Indian elders" next to real testimony would fabricate provenance,
+    which is the specific harm this project exists to measure. A waveform is
+    drawn from the actual recording, so it depicts the thing it illustrates.
+    """
+    try:
+        x, _ = sf.read(str(path), dtype="float32", always_2d=False)
+    except Exception:
+        return []
+    if x.ndim > 1:
+        x = x.mean(axis=1)
+    if not len(x):
+        return []
+    chunks = np.array_split(np.abs(x), buckets)
+    peaks = np.array([c.max() if len(c) else 0.0 for c in chunks])
+    top = peaks.max() or 1.0
+    return [int(round(v / top * 100)) for v in peaks]
+
+
+def strip_dashes(text: str) -> str:
+    """Remove em and en dashes from generated English narration.
+
+    The planner emits them freely and they are the clearest typographic tell
+    of machine-written copy. Corpus text is never touched by this.
+    """
+    return (text.replace("—", " - ").replace("–", "-")
+                .replace("  ", " ").strip())
 
 
 def utt_cer(ref: str, hyp: str) -> float:
@@ -133,11 +171,21 @@ def main() -> int:
             name = f"audio{n}.wav"
             entry["clip"] = name
             if row and Path(row["audio_path"]).exists():
-                shutil.copyfile(Path(row["audio_path"]), WEB_AUDIO / name)
+                src = Path(row["audio_path"])
+                shutil.copyfile(src, WEB_AUDIO / name)
+                entry["peaks"] = waveform_peaks(src)
+                entry["duration_s"] = row.get("duration_s", 0)
                 copied += 1
             else:
                 entry["clip"] = ""
+                entry["peaks"] = []
                 missing += 1
+            entry["bridge"] = strip_dashes(entry.get("bridge", ""))
+        chapter["title"] = strip_dashes(chapter.get("title", ""))
+        chapter["subtitle"] = strip_dashes(chapter.get("subtitle", ""))
+        chapter["intro"] = strip_dashes(chapter.get("intro", ""))
+    story["title"] = strip_dashes(story.get("title", ""))
+    story["subtitle"] = strip_dashes(story.get("subtitle", ""))
 
     # Rewrite the published copy so the reader can resolve clips by name.
     (WEB_DATA / "chapters.json").write_text(

@@ -1,27 +1,118 @@
 /* Homespun reader.
  *
- * Static page, no backend. Everything is read from web/data/*.json, written by
- * scripts/export_web.py. The page must still render something useful when the
- * storybook has not been generated yet, so the two sections load independently
- * and a missing chapters.json degrades to the measurement alone rather than a
- * blank screen.
+ * Static page, no build step, no framework. Data comes from web/data/*.json,
+ * written by scripts/export_web.py.
  *
- * All corpus text is inserted with textContent, never innerHTML: it is data
- * from a file, and building markup out of it would be the one way this page
- * could execute something it should not.
+ * Two rules this file keeps:
+ *
+ * 1. Corpus text is inserted with textContent, never innerHTML. It is data read
+ *    from a file, and building markup out of it is the one way this page could
+ *    execute something it should not.
+ * 2. Story and measurement load independently. The page is useful with either
+ *    one missing, so neither failure blanks the other.
  */
 
 const el = (tag, cls, text) => {
-  const node = document.createElement(tag);
-  if (cls) node.className = cls;
-  if (text !== undefined) node.textContent = text;
-  return node;
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
 };
 
-async function getJSON(path) {
+const svgEl = (tag, attrs = {}) => {
+  const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  return n;
+};
+
+const getJSON = async (path) => {
   const res = await fetch(path);
   if (!res.ok) throw new Error(`${path}: ${res.status}`);
   return res.json();
+};
+
+const mmss = (s) => {
+  const t = Math.round(s || 0);
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+};
+
+/* --------------------------------------------------- single audio at a time --- */
+
+let current = null;
+const claim = (audio, release) => {
+  if (current && current.audio !== audio) current.release();
+  current = { audio, release };
+};
+const release = (audio) => { if (current && current.audio === audio) current = null; };
+
+const ICON_PLAY = "M5 3.5v9l8-4.5z";
+const ICON_STOP = "M5 5h6v6H5z";
+
+function playButton(audio) {
+  const btn = el("button", "play");
+  btn.type = "button";
+  btn.setAttribute("aria-pressed", "false");
+  btn.setAttribute("aria-label", "Play recording");
+
+  const s = svgEl("svg", { viewBox: "0 0 16 16", "aria-hidden": "true" });
+  const path = svgEl("path", { d: ICON_PLAY, fill: "currentColor" });
+  s.appendChild(path);
+  btn.appendChild(s);
+
+  const setState = (playing) => {
+    btn.setAttribute("aria-pressed", String(playing));
+    btn.setAttribute("aria-label", playing ? "Stop recording" : "Play recording");
+    path.setAttribute("d", playing ? ICON_STOP : ICON_PLAY);
+  };
+
+  btn.addEventListener("click", () => {
+    if (audio.paused) {
+      claim(audio, () => { audio.pause(); audio.currentTime = 0; });
+      audio.play().catch(() => setState(false));
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  });
+  audio.addEventListener("play", () => setState(true));
+  audio.addEventListener("pause", () => { setState(false); release(audio); });
+  audio.addEventListener("ended", () => { setState(false); release(audio); });
+  return btn;
+}
+
+/* The only illustration on the page, drawn from the actual recording rather
+   than from stock photography that would invent a provenance. */
+function waveform(peaks, audio) {
+  const n = peaks.length;
+  const s = svgEl("svg", {
+    class: "wave",
+    viewBox: `0 0 ${n * 3} 40`,
+    preserveAspectRatio: "none",
+    "aria-hidden": "true",
+  });
+  const bars = peaks.map((p, i) => {
+    const h = Math.max(2, (p / 100) * 36);
+    const r = svgEl("rect", { x: i * 3, y: (40 - h) / 2, width: 2, height: h, rx: 1 });
+    s.appendChild(r);
+    return r;
+  });
+
+  audio.addEventListener("timeupdate", () => {
+    if (!audio.duration) return;
+    const upto = Math.floor((audio.currentTime / audio.duration) * n);
+    bars.forEach((b, i) => b.classList.toggle("on", i <= upto));
+  });
+  const reset = () => bars.forEach((b) => b.classList.remove("on"));
+  audio.addEventListener("ended", reset);
+  audio.addEventListener("pause", reset);
+
+  s.addEventListener("click", () => {
+    if (audio.paused) {
+      claim(audio, () => { audio.pause(); audio.currentTime = 0; });
+      audio.play().catch(() => {});
+    }
+  });
+  return s;
 }
 
 /* ------------------------------------------------------------------ story --- */
@@ -30,150 +121,204 @@ function renderStory(story) {
   const root = document.getElementById("story");
   root.textContent = "";
 
-  if (story.title) document.getElementById("title").textContent = story.title;
+  if (story.title) {
+    document.getElementById("title").textContent = story.title;
+    document.title = story.title;
+  }
   if (story.subtitle) document.getElementById("subtitle").textContent = story.subtitle;
-  document.title = story.title || "Homespun";
 
-  (story.chapters || []).forEach((chapter, i) => {
-    const section = el("section", "chapter");
-    section.appendChild(el("p", "chapter-num", `Chapter ${i + 1}`));
-    section.appendChild(el("h2", null, chapter.title || ""));
-    if (chapter.subtitle) section.appendChild(el("p", "chapter-sub", chapter.subtitle));
-    if (chapter.intro) section.appendChild(el("p", "intro", chapter.intro));
+  (story.chapters || []).forEach((chapter, index) => {
+    const sec = el("section", "chapter reveal");
 
-    // Narration is English and generated; the quotes below are the speakers'
-    // own recordings. Labelled so a listener is never unsure which is which.
-    const narration = el("div", "narration");
-    narration.appendChild(el("span", "narration-label", "Narration"));
-    const narrAudio = el("audio");
-    narrAudio.controls = true;
-    narrAudio.preload = "none";
-    narrAudio.src = `assets/audio/chapter_${i + 1}.mp3`;
-    narrAudio.addEventListener("error", () => narration.remove());
-    narration.appendChild(narrAudio);
-    section.appendChild(narration);
+    const head = el("div", "chapter-head");
+    head.appendChild(el("h2", null, chapter.title || ""));
+    if (chapter.intro) head.appendChild(el("p", "intro", chapter.intro));
 
-    (chapter.entries || []).forEach((entry) => {
-      const card = el("div", "entry");
-      card.appendChild(el("p", "quote", entry.quote || ""));
-
-      const foot = el("div", "entry-foot");
-      foot.appendChild(el("span", "utt-id", "Recorded voice"));
-      const audio = el("audio");
-      audio.controls = true;
-      audio.preload = "none";
-      audio.src = `assets/clips/${entry.clip || entry.utt_id + ".wav"}`;
-      // A clip can be absent if the export skipped it; drop the player rather
-      // than leaving a broken control on the page.
-      audio.addEventListener("error", () => audio.remove());
-      foot.appendChild(audio);
-      card.appendChild(foot);
-      section.appendChild(card);
-
-      if (entry.bridge) section.appendChild(el("p", "bridge", entry.bridge));
+    const narr = new Audio();
+    narr.preload = "none";
+    narr.src = `assets/audio/chapter_${index + 1}.mp3`;
+    const nbtn = el("button", "narration", "Hear the introduction");
+    nbtn.type = "button";
+    nbtn.setAttribute("aria-pressed", "false");
+    nbtn.addEventListener("click", () => {
+      if (narr.paused) {
+        claim(narr, () => { narr.pause(); narr.currentTime = 0; });
+        narr.play().catch(() => nbtn.remove());
+      } else {
+        narr.pause();
+        narr.currentTime = 0;
+      }
     });
+    narr.addEventListener("play", () => nbtn.setAttribute("aria-pressed", "true"));
+    narr.addEventListener("pause", () => { nbtn.setAttribute("aria-pressed", "false"); release(narr); });
+    narr.addEventListener("ended", () => { nbtn.setAttribute("aria-pressed", "false"); release(narr); });
+    narr.addEventListener("error", () => nbtn.remove());
+    head.appendChild(nbtn);
+    sec.appendChild(head);
 
-    root.appendChild(section);
+    const list = el("div", "entries");
+    (chapter.entries || []).forEach((entry) => {
+      const item = el("article", "entry");
+      item.appendChild(el("p", "quote", entry.quote || ""));
+
+      if (entry.clip) {
+        const audio = new Audio();
+        audio.preload = "none";
+        audio.src = `assets/clips/${entry.clip}`;
+
+        const player = el("div", "player");
+        player.appendChild(playButton(audio));
+        if (entry.peaks && entry.peaks.length) player.appendChild(waveform(entry.peaks, audio));
+        player.appendChild(el("span", "dur", mmss(entry.duration_s)));
+        audio.addEventListener("error", () => player.remove());
+        item.appendChild(player);
+      }
+
+      list.appendChild(item);
+    });
+    sec.appendChild(list);
+    root.appendChild(sec);
   });
+
+  observe(root.querySelectorAll(".reveal"));
 }
 
-/* ------------------------------------------------------------- measurement --- */
+/* ------------------------------------------------------------ measurement --- */
 
-function pct(a, b) {
-  if (!a) return "";
-  const rel = ((b - a) / a) * 100;
-  return `${rel > 0 ? "+" : ""}${rel.toFixed(1)}%`;
+const trim = (t, n) => (t.length > n ? t.slice(0, n) + " ..." : t);
+
+function renderExhibit(m) {
+  const s = (m.samples || [])[0];
+  if (!s) return;
+  document.getElementById("ex-said").textContent = s.reference;
+  document.getElementById("ex-gloss").textContent =
+    `One recording, ${s.duration_s.toFixed(1)} seconds long.`;
+  document.getElementById("ex-stock").textContent = trim(s.baseline, 150);
+  document.getElementById("ex-tuned").textContent = trim(s.adapted, 150);
+  document.getElementById("exhibit").hidden = false;
 }
 
-function metricsTable(m) {
-  const rows = [
-    ["WER, all", m.baseline.wer, m.adapted.wer],
-    ["CER, all", m.baseline.cer, m.adapted.cer],
-    ["CER, lifecycle", m.baseline.lifecycle.cer, m.adapted.lifecycle.cer],
-    ["CER, translation", m.baseline.translation.cer, m.adapted.translation.cer],
-  ];
+function figure(label, value, was, delta) {
+  const f = el("div", "figure");
+  f.appendChild(el("p", "k", label));
+  f.appendChild(el("p", "v", value));
+  const w = el("p", "was");
+  w.appendChild(el("span", null, `was ${was} · `));
+  w.appendChild(el("span", "delta", delta));
+  f.appendChild(w);
+  return f;
+}
 
-  const table = el("table", "metrics");
-  const thead = el("thead");
-  const hr = el("tr");
-  ["", "stock", "adapted", "change"].forEach((h) => hr.appendChild(el("th", null, h)));
-  thead.appendChild(hr);
-  table.appendChild(thead);
+function renderFigures(m) {
+  const root = document.getElementById("figures");
+  root.textContent = "";
+  const rel = (a, b) => `${Math.round(((b - a) / a) * 100)}%`;
 
-  const tbody = el("tbody");
-  rows.forEach(([label, a, b]) => {
-    const tr = el("tr");
-    tr.appendChild(el("td", null, label));
-    tr.appendChild(el("td", null, a.toFixed(4)));
-    tr.appendChild(el("td", null, b.toFixed(4)));
-    tr.appendChild(el("td", b < a ? "delta-good" : "delta-bad", pct(a, b)));
-    tbody.appendChild(tr);
-  });
+  root.appendChild(figure("Word error rate", m.adapted.wer.toFixed(2),
+    m.baseline.wer.toFixed(2), rel(m.baseline.wer, m.adapted.wer)));
+  root.appendChild(figure("Character error rate", m.adapted.cer.toFixed(2),
+    m.baseline.cer.toFixed(2), rel(m.baseline.cer, m.adapted.cer)));
 
   const mb = m.baseline.markers / m.baseline.markers_total;
   const ma = m.adapted.markers / m.adapted.markers_total;
-  const tr = el("tr");
-  tr.appendChild(el("td", null, "Dialect words kept"));
-  tr.appendChild(el("td", null, `${(mb * 100).toFixed(1)}%`));
-  tr.appendChild(el("td", null, `${(ma * 100).toFixed(1)}%`));
-  tr.appendChild(el("td", "delta-good", `${(ma / mb).toFixed(1)}x`));
-  tbody.appendChild(tr);
-
-  table.appendChild(tbody);
-  return table;
+  root.appendChild(figure("Awadhi words kept", `${Math.round(ma * 100)}%`,
+    `${Math.round(mb * 100)}%`, `${(ma / mb).toFixed(1)}x`));
 }
 
-function renderMetrics(m) {
-  const root = document.getElementById("metrics");
+function renderTable(m) {
+  const root = document.getElementById("table-wrap");
   root.textContent = "";
-  root.appendChild(metricsTable(m));
-  root.appendChild(el("p", "intro",
-    `Measured on ${m.test_utterances} held-out utterances. Lower is better; ` +
-    `a word error rate above 1.0 means the model produced more errors than ` +
-    `there were words to get wrong.`));
+  const t = el("table", "metrics");
 
-  const samples = document.getElementById("samples");
-  samples.textContent = "";
-  samples.appendChild(el("h2", null, "Side by side"));
-  samples.appendChild(el("p", "intro",
-    "The clearest differences, by character error rate. Truncated where the " +
-    "stock model ran away."));
+  const thead = el("thead");
+  const hr = el("tr");
+  ["", "Utterances", "Stock", "Retrained"].forEach((h) => hr.appendChild(el("th", null, h)));
+  thead.appendChild(hr);
+  t.appendChild(thead);
 
-  (m.samples || []).forEach((s) => {
-    const box = el("div", "sample");
-    box.appendChild(el("h4", null,
-      `${s.subset} · ${s.duration_s.toFixed(1)}s · CER ${s.cer_baseline} → ${s.cer_adapted}`));
-    [["Said", "ref", s.reference],
-     ["Stock", "base", s.baseline],
-     ["Adapted", "lora", s.adapted]].forEach(([label, cls, text]) => {
-      const line = el("div", `line ${cls}`);
-      line.appendChild(el("span", "label", label));
-      const clipped = text.length > 220 ? text.slice(0, 220) + " …" : text;
-      line.appendChild(el("span", "text", clipped));
-      box.appendChild(line);
+  const tb = el("tbody");
+  const row = (label, count, a, b) => {
+    const tr = el("tr");
+    tr.appendChild(el("td", null, label));
+    tr.appendChild(el("td", "num", String(count)));
+    tr.appendChild(el("td", "num", a.toFixed(4)));
+    tr.appendChild(el("td", "num win", b.toFixed(4)));
+    return tr;
+  };
+  tb.appendChild(row("Long narratives, CER", m.baseline.lifecycle.utterances,
+    m.baseline.lifecycle.cer, m.adapted.lifecycle.cer));
+  tb.appendChild(row("Short sentences, CER", m.baseline.translation.utterances,
+    m.baseline.translation.cer, m.adapted.translation.cer));
+  tb.appendChild(row("All, CER", m.test_utterances, m.baseline.cer, m.adapted.cer));
+  t.appendChild(tb);
+  root.appendChild(t);
+}
+
+function renderSamples(m) {
+  const root = document.getElementById("samples");
+  root.textContent = "";
+  (m.samples || []).slice(1, 4).forEach((s) => {
+    const box = el("div", "sample reveal");
+    box.appendChild(el("p", "meta",
+      `${s.duration_s.toFixed(1)}s · character error ${s.cer_baseline} to ${s.cer_adapted}`));
+    [["Said", "said", s.reference],
+     ["Stock", "stock", trim(s.baseline, 170)],
+     ["Retrained", "tuned", trim(s.adapted, 170)]].forEach(([tag, cls, text]) => {
+      const r = el("div", `row ${cls}`);
+      r.appendChild(el("span", "tag", tag));
+      r.appendChild(el("span", "val", text));
+      box.appendChild(r);
     });
-    samples.appendChild(box);
+    root.appendChild(box);
   });
+  observe(root.querySelectorAll(".reveal"));
+}
+
+/* ----------------------------------------------------------------- motion --- */
+
+/* IntersectionObserver rather than a scroll listener: no work on frames where
+   nothing crosses the threshold, and each node is unobserved once revealed. */
+let io = null;
+function observe(nodes) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    nodes.forEach((n) => n.classList.add("in"));
+    return;
+  }
+  if (!io) {
+    io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("in");
+          io.unobserve(e.target);
+        }
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+  }
+  nodes.forEach((n) => io.observe(n));
 }
 
 /* ------------------------------------------------------------------- boot --- */
 
 (async function () {
   try {
-    renderMetrics(await getJSON("data/metrics.json"));
+    const m = await getJSON("data/metrics.json");
+    renderExhibit(m);
+    renderFigures(m);
+    renderTable(m);
+    renderSamples(m);
   } catch (err) {
-    document.getElementById("metrics").appendChild(
-      el("p", "status", "Measurement data unavailable."));
+    document.getElementById("figures").appendChild(
+      el("p", "status", "Measurement data is unavailable."));
     console.error(err);
   }
 
   try {
     renderStory(await getJSON("data/chapters.json"));
   } catch (err) {
-    document.getElementById("story").textContent = "";
-    document.getElementById("story").appendChild(el("p", "status",
-      "The storybook has not been generated yet. Run scripts/build_story.py, " +
-      "then scripts/export_web.py."));
+    const root = document.getElementById("story");
+    root.textContent = "";
+    root.appendChild(el("p", "status",
+      "The testimony has not been generated yet. Run scripts/build_story.py, then scripts/export_web.py."));
     console.error(err);
   }
 })();
