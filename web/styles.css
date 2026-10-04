@@ -36,8 +36,11 @@
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* The script sets data-theme on load, so this only governs the first paint
+   before it runs. Light is the default; the toggle and localStorage decide
+   thereafter. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
     --paper: #101214;
     --surface: #161a1c;
     --sunk: #1b1f22;
@@ -364,3 +367,16 @@ progress { width: 100%; max-width: 24rem; height: 6px; display: block; margin-bo
   border-radius: var(--radius);
   padding: 1rem 1.2rem;
 }
+
+.theme {
+  font-family: var(--latin);
+  font-size: 0.82rem;
+  color: var(--ink-2);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.22rem 0.7rem;
+  cursor: pointer;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.theme:hover { color: var(--ink); border-color: var(--accent); }

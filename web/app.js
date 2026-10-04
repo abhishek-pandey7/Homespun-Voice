@@ -119,6 +119,7 @@ function waveform(peaks, audio) {
 
 function renderStory(story) {
   const root = document.getElementById("story");
+  if (!root) return;
   root.textContent = "";
 
   // The page is called Homespun. The generated story title names the section,
@@ -194,14 +195,15 @@ function renderStory(story) {
 const trim = (t, n) => (t.length > n ? t.slice(0, n) + " ..." : t);
 
 function renderExhibit(m) {
+  const root = document.getElementById("exhibit");
   const s = (m.samples || [])[0];
-  if (!s) return;
+  if (!root || !s) return;
   document.getElementById("ex-said").textContent = s.reference;
   document.getElementById("ex-gloss").textContent =
     `One recording, ${s.duration_s.toFixed(1)} seconds long.`;
   document.getElementById("ex-stock").textContent = trim(s.baseline, 150);
   document.getElementById("ex-tuned").textContent = trim(s.adapted, 150);
-  document.getElementById("exhibit").hidden = false;
+  root.hidden = false;
 }
 
 function figure(label, value, was, delta) {
@@ -217,6 +219,7 @@ function figure(label, value, was, delta) {
 
 function renderFigures(m) {
   const root = document.getElementById("figures");
+  if (!root) return;
   root.textContent = "";
   const rel = (a, b) => `${Math.round(((b - a) / a) * 100)}%`;
 
@@ -233,6 +236,7 @@ function renderFigures(m) {
 
 function renderTable(m) {
   const root = document.getElementById("table-wrap");
+  if (!root) return;
   root.textContent = "";
   const t = el("table", "metrics");
 
@@ -262,6 +266,7 @@ function renderTable(m) {
 
 function renderSamples(m) {
   const root = document.getElementById("samples");
+  if (!root) return;
   root.textContent = "";
   (m.samples || []).slice(1, 4).forEach((s) => {
     const box = el("div", "sample reveal");
@@ -278,6 +283,33 @@ function renderSamples(m) {
     root.appendChild(box);
   });
   observe(root.querySelectorAll(".reveal"));
+}
+
+/* ------------------------------------------------------------------ theme --- */
+
+/* Light by default. The page is a document, and documents read as paper unless
+   someone says otherwise; the choice is remembered per browser. */
+function applyTheme(mode) {
+  document.documentElement.setAttribute("data-theme", mode);
+  document.querySelectorAll("[data-theme-toggle]").forEach((b) => {
+    b.setAttribute("aria-pressed", String(mode === "dark"));
+    b.textContent = mode === "dark" ? "Light" : "Dark";
+  });
+}
+
+function setupTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem("homespun-theme"); } catch (e) { /* blocked */ }
+  applyTheme(saved === "dark" ? "dark" : "light");
+
+  document.querySelectorAll("[data-theme-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "dark"
+        ? "light" : "dark";
+      applyTheme(next);
+      try { localStorage.setItem("homespun-theme", next); } catch (e) { /* blocked */ }
+    });
+  });
 }
 
 /* ----------------------------------------------------------------- motion --- */
@@ -305,26 +337,35 @@ function observe(nodes) {
 
 /* ------------------------------------------------------------------- boot --- */
 
+const fail = (id, message) => {
+  const root = document.getElementById(id);
+  if (!root) return;
+  root.textContent = "";
+  root.appendChild(el("p", "status", message));
+};
+
 (async function () {
-  try {
-    const m = await getJSON("data/metrics.json");
-    renderExhibit(m);
-    renderFigures(m);
-    renderTable(m);
-    renderSamples(m);
-  } catch (err) {
-    document.getElementById("figures").appendChild(
-      el("p", "status", "Measurement data is unavailable."));
-    console.error(err);
+  setupTheme();
+
+  if (document.getElementById("exhibit") || document.getElementById("figures")) {
+    try {
+      const m = await getJSON("data/metrics.json");
+      renderExhibit(m);
+      renderFigures(m);
+      renderTable(m);
+      renderSamples(m);
+    } catch (err) {
+      fail("figures", "Measurement data is unavailable.");
+      console.error(err);
+    }
   }
 
-  try {
-    renderStory(await getJSON("data/chapters.json"));
-  } catch (err) {
-    const root = document.getElementById("story");
-    root.textContent = "";
-    root.appendChild(el("p", "status",
-      "The testimony has not been generated yet. Run scripts/build_story.py, then scripts/export_web.py."));
-    console.error(err);
+  if (document.getElementById("story")) {
+    try {
+      renderStory(await getJSON("data/chapters.json"));
+    } catch (err) {
+      fail("story", "The testimony could not be loaded.");
+      console.error(err);
+    }
   }
 })();

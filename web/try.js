@@ -254,9 +254,34 @@ function setupRecorder() {
   document.getElementById("preload").addEventListener("click", () => ensureModel());
 }
 
+/* ------------------------------------------------------------------ theme --- */
+
+function applyTheme(mode) {
+  document.documentElement.setAttribute("data-theme", mode);
+  document.querySelectorAll("[data-theme-toggle]").forEach((b) => {
+    b.setAttribute("aria-pressed", String(mode === "dark"));
+    b.textContent = mode === "dark" ? "Light" : "Dark";
+  });
+}
+
+function setupTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem("homespun-theme"); } catch (e) { /* blocked */ }
+  applyTheme(saved === "dark" ? "dark" : "light");
+  document.querySelectorAll("[data-theme-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "dark"
+        ? "light" : "dark";
+      applyTheme(next);
+      try { localStorage.setItem("homespun-theme", next); } catch (e) { /* blocked */ }
+    });
+  });
+}
+
 /* ------------------------------------------------------------------- boot --- */
 
 (async function () {
+  setupTheme();
   try {
     const res = await fetch("data/examples.json");
     if (res.ok) renderExamples(await res.json());
