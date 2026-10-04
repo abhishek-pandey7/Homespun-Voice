@@ -152,6 +152,8 @@ function renderExamples(data) {
 
 let transcriber = null;
 let loading = false;
+let backend = "wasm";
+let TextStreamerCls = null;
 
 const setStatus = (text, cls) => {
   const s = document.getElementById("live-status");
@@ -169,24 +171,51 @@ async function ensureModel() {
   setStatus("Downloading the model. This happens once; your browser caches it.");
 
   try {
-    const { pipeline, env } = await import(
+    const lib = await import(
       "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2"
     );
+    const { pipeline, env } = lib;
+    TextStreamerCls = lib.TextStreamer || null;
     env.allowLocalModels = false;
 
-    transcriber = await pipeline("automatic-speech-recognition", MODEL, {
-      dtype: "q8",
-      device: "wasm",
-      progress_callback: (p) => {
-        if (p.status === "progress" && p.total) {
-          const pct = Math.round((p.loaded / p.total) * 100);
-          bar.value = pct;
-          setStatus(`Downloading ${p.file || "model"}: ${pct}%`);
-        }
-      },
-    });
+    // WASM was running about fourteen times slower than real time, which is
+    // what made a twenty second clip take nearly five minutes. WebGPU is the
+    // difference between a demo someone waits for and one they abandon, so it
+    // is tried first and WASM stays as the fallback.
+    const haveGPU = typeof navigator !== "undefined" && "gpu" in navigator;
+    const attempts = haveGPU
+      ? [{ device: "webgpu", dtype: "q8" }, { device: "wasm", dtype: "q8" }]
+      : [{ device: "wasm", dtype: "q8" }];
+
+    const onProgress = (p) => {
+      if (p.status === "progress" && p.total) {
+        const pct = Math.round((p.loaded / p.total) * 100);
+        bar.value = pct;
+        setStatus(`Downloading ${p.file || "model"}: ${pct}%`);
+      }
+    };
+
+    let lastErr = null;
+    for (const opts of attempts) {
+      try {
+        setStatus(opts.device === "webgpu"
+          ? "Loading the model on your GPU."
+          : "Loading the model.");
+        transcriber = await pipeline("automatic-speech-recognition", MODEL,
+                                     { ...opts, progress_callback: onProgress });
+        backend = opts.device;
+        break;
+      } catch (err) {
+        lastErr = err;
+        console.warn(`${opts.device} unavailable:`, err.message);
+      }
+    }
+    if (!transcriber) throw lastErr || new Error("no backend available");
+
     bar.hidden = true;
-    setStatus("Model ready. It stays cached for next time.", "ok");
+    setStatus(backend === "webgpu"
+      ? "Model ready, running on your GPU. It stays cached for next time."
+      : "Model ready, running on CPU, which is slow. It stays cached.", "ok");
     return transcriber;
   } catch (err) {
     bar.hidden = true;
@@ -264,11 +293,29 @@ async function runOn(blobOrFile, label) {
     if (clipped) audio = audio.slice(0, MAX_SECONDS * TARGET_SR);
     const seconds = audio.length / TARGET_SR;
 
+    // Stream tokens into the box as they decode. On CPU this is the difference
+    // between a blank panel for a minute and visible progress.
+    const live = el("p", "live-text", "");
+    out.appendChild(live);
+    let streamer;
+    if (TextStreamerCls && model.tokenizer) {
+      try {
+        streamer = new TextStreamerCls(model.tokenizer, {
+          skip_prompt: true,
+          skip_special_tokens: true,
+          callback_function: (chunk) => { live.textContent += chunk; },
+        });
+      } catch (err) {
+        console.warn("streaming unavailable:", err.message);
+      }
+    }
+
     const t0 = performance.now();
     const result = await model(audio, {
       language: "hi",
       task: "transcribe",
       max_new_tokens: MAX_TOKENS,
+      ...(streamer ? { streamer } : {}),
       // These two are not used for the published benchmark, where both models
       // decode greedily so the adapter is the only variable. Here there is no
       // comparison to protect, and without them an out-of-domain clip locks
@@ -279,12 +326,14 @@ async function runOn(blobOrFile, label) {
     const took = (performance.now() - t0) / 1000;
 
     const text = (result.text || "").trim();
-    out.appendChild(el("p", "live-text", text || "(nothing recognised)"));
+    live.textContent = text || "(nothing recognised)";
 
     const loop = describeLoop(text);
     if (loop) out.appendChild(el("p", "live-note", loop));
 
-    let note = `${label}: ${seconds.toFixed(1)}s of audio in ${took.toFixed(1)}s, in your browser.`;
+    const speed = took > 0 ? (seconds / took).toFixed(1) : "0";
+    let note = `${label}: ${seconds.toFixed(1)}s of audio in ${took.toFixed(1)}s ` +
+               `(${speed}x real time) on ${backend === "webgpu" ? "your GPU" : "CPU"}.`;
     if (clipped) note += ` Only the first ${MAX_SECONDS}s was transcribed.`;
     setStatus(note, "ok");
   } catch (err) {
