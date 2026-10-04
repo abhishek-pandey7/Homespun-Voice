@@ -46,6 +46,7 @@
       <div class="note"><b>Base model</b><span>openai/whisper-small, 244 million parameters. Whisper has no Awadhi language id, so the hint is pinned to Hindi for every run, which caps what either model can reach.</span></div>
       <div class="note"><b>Adapter</b><span>LoRA on the attention projections only, rank 16, learning rate 1e-4, six epochs. 8.7 MB of trained weights.</span></div>
       <div class="note"><b>Hardware</b><span>One RTX 4050 laptop GPU with 6 GB. 52 minutes, peaking at 3.7 GB. Batch 8 with gradient checkpointing beat both smaller batches and checkpointing turned off.</span></div>
+      <div class="note"><b>The browser build</b><span>The model on the Try it page is quantised to int8 so it is 279 MB instead of 1.76 GB. That costs accuracy: on the 20 shortest held-out utterances the full-precision adapter scores 0.2553 character error and the browser build scores 0.2943, against 0.6170 for the stock model. It is a worse model than the one the Evidence page measures, and still a far better one than Whisper alone.</span></div>
       <div class="note"><b>Scoring</b><span>jiwer, corpus level rather than an average of per-utterance rates. Reference and hypothesis are normalised identically before scoring, and the harness is verified against known answers before it reports anything.</span></div>
     </div>
   </div>
