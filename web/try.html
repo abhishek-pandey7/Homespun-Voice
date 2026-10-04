@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Homespun</title>
-<meta name="description" content="A speech model retrained to transcribe Awadhi as it is actually spoken, with the testimony it was built from.">
+<title>Try it / Homespun</title>
+<meta name="description" content="Record or upload speech and transcribe it with an Awadhi-adapted Whisper, running entirely in your browser.">
 <meta property="og:title" content="Homespun">
 <meta property="og:description" content="A speech model retrained to transcribe Awadhi without translating it into standard Hindi.">
 <meta name="theme-color" content="#f3f4f3" media="(prefers-color-scheme: light)">
@@ -20,69 +20,72 @@
   <div class="wrap nav-inner">
     <a class="brand" href="index.html">Homespun</a>
     <div class="nav-links">
-      <a href="index.html" data-page="index" aria-current="page">Listen</a>
-      <a href="try.html" data-page="try">Try it</a>
+      <a href="index.html" data-page="index">Listen</a>
+      <a href="try.html" data-page="try" aria-current="page">Try it</a>
       <a href="evidence.html" data-page="evidence">Evidence</a>
       <a href="method.html" data-page="method">Method</a>
     </div>
   </div>
 </nav>
 
-<header class="hero">
+<header class="hero compact">
   <div class="wrap">
-    <p class="eyebrow">Awadhi / Uttar Pradesh</p>
-    <h1>Homespun</h1>
+    <h1>Try it</h1>
     <p class="lede">
-      My grandparents speak Awadhi. Every transcription app I tried either
-      flattened their words into standard Hindi or gave up entirely, because
-      Awadhi is treated as a broken version of a language instead of a language.
-      So I retrained a speech model on the dialect, so my siblings and I can
-      keep what they actually said rather than a tidied-up version of it.
+      Four recordings below, already transcribed by both models. Then, if you
+      want, run the retrained model on your own voice without anything leaving
+      your machine.
     </p>
   </div>
 </header>
 
 <main>
-<section class="exhibit" id="exhibit" hidden>
+  <section class="examples-section">
     <div class="wrap">
-      <h2 class="section-title">Here is the problem</h2>
+      <h2 class="section-title">Four recordings</h2>
       <p class="section-note">
-        A speaker says a short sentence in Awadhi. The general-purpose model
-        does not fail by getting a word wrong. It gives up and repeats one
-        syllable until it runs out of room.
+        From the held-out test set, picked across the range rather than from the
+        wins: a total collapse, a solid gain, a small one, and one the adapter
+        made worse.
       </p>
-      <div class="exhibit-grid">
-        <div>
-          <p class="said" id="ex-said"></p>
-          <p class="gloss" id="ex-gloss"></p>
-        </div>
-        <div class="machine">
-          <div class="bad">
-            <p class="who">Stock whisper-small</p>
-            <p class="out" id="ex-stock"></p>
-          </div>
-          <div class="good">
-            <p class="who">Retrained on Awadhi</p>
-            <p class="out" id="ex-tuned"></p>
-          </div>
-        </div>
-      </div>
+      <div id="examples"><p class="status">Loading examples.</p></div>
     </div>
   </section>
-<section class="chapters">
+
+  <section class="live-section">
     <div class="wrap">
-      <h2 class="section-title" id="story-title">The testimony</h2>
+      <h2 class="section-title">Your own voice</h2>
       <p class="section-note">
-        Recorded answers from Awadhi speakers describing the customs around
-        birth, marriage and mourning. Each quotation is the corpus transcription,
-        unaltered, and plays in the speaker's own voice. The English beneath it
-        is machine translation, offered so the testimony can be followed; where
-        the translator was not confident, none is shown.
+        The model runs inside this page. Your audio is never uploaded, which is
+        the point: a tool for keeping family recordings should not require
+        handing them to someone else's server. The first run downloads about
+        250 MB and your browser keeps it cached.
       </p>
-      <div id="story"><p class="status">Loading the testimony.</p></div>
+
+      <div class="live-controls">
+        <button id="rec" class="btn primary" type="button">Record</button>
+        <label class="btn" for="file">Upload wav or mp3
+          <input id="file" type="file" accept="audio/*" hidden>
+        </label>
+        <button id="preload" class="btn quiet" type="button">Download model first</button>
+      </div>
+
+      <progress id="progress" max="100" value="0" hidden></progress>
+      <p id="live-status" class="live-status">
+        Awadhi or Hindi speech works best. The model learned from 8 kHz
+        recordings of people describing family customs.
+      </p>
+      <div id="live-out"></div>
+
+      <p class="section-note small">
+        Only the retrained model runs here. Carrying the stock model too would
+        double the download to demonstrate a failure already shown above, with
+        the recordings that produced it.
+      </p>
     </div>
   </section>
 </main>
+
 <footer>
   <div class="wrap">
     <p>
@@ -106,6 +109,6 @@ Speech for Social Good Workshop, Interspeech 2022.</pre>
   </div>
 </footer>
 
-<script src="app.js"></script>
+<script src="try.js"></script>
 </body>
 </html>

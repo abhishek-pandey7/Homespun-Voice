@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Homespun</title>
-<meta name="description" content="A speech model retrained to transcribe Awadhi as it is actually spoken, with the testimony it was built from.">
+<title>Evidence / Homespun</title>
+<meta name="description" content="Word and character error rates for stock whisper-small against an Awadhi-adapted version, on a held-out test split.">
 <meta property="og:title" content="Homespun">
 <meta property="og:description" content="A speech model retrained to transcribe Awadhi without translating it into standard Hindi.">
 <meta name="theme-color" content="#f3f4f3" media="(prefers-color-scheme: light)">
@@ -20,66 +20,38 @@
   <div class="wrap nav-inner">
     <a class="brand" href="index.html">Homespun</a>
     <div class="nav-links">
-      <a href="index.html" data-page="index" aria-current="page">Listen</a>
+      <a href="index.html" data-page="index">Listen</a>
       <a href="try.html" data-page="try">Try it</a>
-      <a href="evidence.html" data-page="evidence">Evidence</a>
+      <a href="evidence.html" data-page="evidence" aria-current="page">Evidence</a>
       <a href="method.html" data-page="method">Method</a>
     </div>
   </div>
 </nav>
 
-<header class="hero">
+<header class="hero compact">
   <div class="wrap">
-    <p class="eyebrow">Awadhi / Uttar Pradesh</p>
-    <h1>Homespun</h1>
+    <h1>Evidence</h1>
     <p class="lede">
-      My grandparents speak Awadhi. Every transcription app I tried either
-      flattened their words into standard Hindi or gave up entirely, because
-      Awadhi is treated as a broken version of a language instead of a language.
-      So I retrained a speech model on the dialect, so my siblings and I can
-      keep what they actually said rather than a tidied-up version of it.
+      Both models read the same held-out recordings through the same script with
+      the same settings. The only difference between them is an 8.7 MB adapter
+      trained for 52 minutes on one laptop GPU.
     </p>
   </div>
 </header>
 
 <main>
-<section class="exhibit" id="exhibit" hidden>
+<section class="measure-section">
     <div class="wrap">
-      <h2 class="section-title">Here is the problem</h2>
-      <p class="section-note">
-        A speaker says a short sentence in Awadhi. The general-purpose model
-        does not fail by getting a word wrong. It gives up and repeats one
-        syllable until it runs out of room.
+      <p class="eyebrow">Measured, not claimed</p>
+      <h2>What changed, and by how much</h2>
+      <p class="intro" id="measure-intro">
+        Both models read the same held-out recordings through the same script
+        with the same settings. The only difference between them is an 8.7 MB
+        adapter trained for 52 minutes on one laptop GPU.
       </p>
-      <div class="exhibit-grid">
-        <div>
-          <p class="said" id="ex-said"></p>
-          <p class="gloss" id="ex-gloss"></p>
-        </div>
-        <div class="machine">
-          <div class="bad">
-            <p class="who">Stock whisper-small</p>
-            <p class="out" id="ex-stock"></p>
-          </div>
-          <div class="good">
-            <p class="who">Retrained on Awadhi</p>
-            <p class="out" id="ex-tuned"></p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-<section class="chapters">
-    <div class="wrap">
-      <h2 class="section-title" id="story-title">The testimony</h2>
-      <p class="section-note">
-        Recorded answers from Awadhi speakers describing the customs around
-        birth, marriage and mourning. Each quotation is the corpus transcription,
-        unaltered, and plays in the speaker's own voice. The English beneath it
-        is machine translation, offered so the testimony can be followed; where
-        the translator was not confident, none is shown.
-      </p>
-      <div id="story"><p class="status">Loading the testimony.</p></div>
+      <div class="figures" id="figures"></div>
+      <div id="table-wrap"></div>
+      <div class="samples" id="samples"></div>
     </div>
   </section>
 </main>

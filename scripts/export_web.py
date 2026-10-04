@@ -133,6 +133,41 @@ def main() -> int:
             "cer_adapted": round(utt_cer(base[u]["reference"], lora[u]["hypothesis"]), 3),
         })
 
+    # --- example clips for the try-it page --------------------------------
+    # Precomputed so the page is useful the instant it loads, before anyone
+    # decides whether to download a model to try their own voice.
+    EX_DIR = Path("web/assets/examples")
+    EX_DIR.mkdir(parents=True, exist_ok=True)
+    for stale in EX_DIR.glob("*.wav"):
+        stale.unlink()
+    manifest = {r["utt_id"]: r for r in load_jsonl(MANIFEST)}
+
+    # Spread across the error range rather than cherry-picking the best wins:
+    # one collapse, one ordinary gain, one near-miss, one the adapter lost.
+    ranked = [(d, u) for d, u in scored]
+    picks = [ranked[0], ranked[len(ranked) // 3], ranked[2 * len(ranked) // 3], ranked[-1]]
+    examples = []
+    for i, (delta, u) in enumerate(picks, 1):
+        row = manifest.get(u)
+        if not row or not Path(row["audio_path"]).exists():
+            continue
+        name = f"example{i}.wav"
+        shutil.copyfile(Path(row["audio_path"]), EX_DIR / name)
+        examples.append({
+            "clip": name,
+            "duration_s": row["duration_s"],
+            "subset": base[u]["subset"],
+            "reference": base[u]["reference"],
+            "baseline": base[u]["hypothesis"],
+            "adapted": lora[u]["hypothesis"],
+            "cer_baseline": round(utt_cer(base[u]["reference"], base[u]["hypothesis"]), 3),
+            "cer_adapted": round(utt_cer(base[u]["reference"], lora[u]["hypothesis"]), 3),
+            "peaks": waveform_peaks(Path(row["audio_path"])),
+        })
+    (WEB_DATA / "examples.json").write_text(
+        json.dumps({"examples": examples}, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"[ok] {WEB_DATA / 'examples.json'} ({len(examples)} clips)")
+
     metrics = {
         "test_utterances": len(shared),
         "baseline": block(base),

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Method / Homespun</title>
+<meta name="description" content="How the Awadhi adapter was trained, on what corpus, and what the results do not show.">
+<meta property="og:title" content="Homespun">
+<meta property="og:description" content="A speech model retrained to transcribe Awadhi without translating it into standard Hindi.">
+<meta name="theme-color" content="#f3f4f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101214" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+Devanagari:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html">Homespun</a>
+    <div class="nav-links">
+      <a href="index.html" data-page="index">Listen</a>
+      <a href="try.html" data-page="try">Try it</a>
+      <a href="evidence.html" data-page="evidence">Evidence</a>
+      <a href="method.html" data-page="method" aria-current="page">Method</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero compact">
+  <div class="wrap">
+    <h1>Method</h1>
+    <p class="lede">
+      How the adapter was trained, on what, and the four things the results do
+      not tell you.
+    </p>
+  </div>
+</header>
+<main>
+<section class="notes">
+  <div class="wrap">
+    <h2 class="section-title">How it was built</h2>
+    <div class="note-list">
+      <div class="note"><b>Corpus</b><span>SpeeD-IA Awadhi: 2,538 usable utterances, 3 hours 14 minutes, 18 speakers, split by the corpus authors into 2,029 for training and 509 held out.</span></div>
+      <div class="note"><b>Base model</b><span>openai/whisper-small, 244 million parameters. Whisper has no Awadhi language id, so the hint is pinned to Hindi for every run, which caps what either model can reach.</span></div>
+      <div class="note"><b>Adapter</b><span>LoRA on the attention projections only, rank 16, learning rate 1e-4, six epochs. 8.7 MB of trained weights.</span></div>
+      <div class="note"><b>Hardware</b><span>One RTX 4050 laptop GPU with 6 GB. 52 minutes, peaking at 3.7 GB. Batch 8 with gradient checkpointing beat both smaller batches and checkpointing turned off.</span></div>
+      <div class="note"><b>Scoring</b><span>jiwer, corpus level rather than an average of per-utterance rates. Reference and hypothesis are normalised identically before scoring, and the harness is verified against known answers before it reports anything.</span></div>
+    </div>
+  </div>
+</section>
+<section class="notes">
+    <div class="wrap">
+      <h2>What these numbers do not say</h2>
+      <div class="note-list">
+        <div class="note">
+          <b>The recordings are 8 kHz.</b>
+          <span>Everything above 4 kHz was never captured, which is where much
+          of the energy that separates fricatives lives. That ceiling applies to
+          both models equally, so the comparison holds while the absolute
+          figures stay low.</span>
+        </div>
+        <div class="note">
+          <b>The same speakers appear in training and testing.</b>
+          <span>The corpus authors split by utterance rather than by speaker.
+          These results describe adaptation to known voices and say nothing
+          about an unheard one.</span>
+        </div>
+        <div class="note">
+          <b>Long answers improved least.</b>
+          <span>Short prompted sentences gained roughly four times as much as
+          the long spontaneous narratives, which had a fifth of the training
+          data. The narratives are the part this page is built from.</span>
+        </div>
+        <div class="note">
+          <b>Twenty of 509 utterances got worse.</b>
+          <span>The stock model collapses into repeating one syllable until it
+          runs out of room. Retraining mostly stops that. Mostly.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <p>
+      Quoted speech is the corpus's own human transcription and plays in the
+      speaker's own voice. Chapter narration is English, written by a language
+      model and read by a synthetic one. Nothing inside a quotation has been
+      corrected or standardised; a validator rejects the page if it has.
+    </p>
+    <p>
+      Corpus: <strong>SpeeD-IA Awadhi</strong>, collected by Dr. Bhimrao Ambedkar
+      University and the Council for Strategic and Defence Research with Karya
+      Inc. and UnReaL-TecE LLP.
+      <a href="https://github.com/unrealtecellp/SpeeD-IA">Source</a>.
+      Licensed <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>.
+      This work is a derivative and carries the same licence.
+    </p>
+    <pre class="cite">Kumar, R., Singh, S., Ratan, S., Raj, M., Sinha, S., Lahiri, B.,
+Seshadri, V., Bali, K., &amp; Ojha, A. Kr. (2022). Annotated Speech Corpus
+for Low Resource Indian Languages: Awadhi, Bhojpuri, Braj and Magahi.
+Speech for Social Good Workshop, Interspeech 2022.</pre>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
