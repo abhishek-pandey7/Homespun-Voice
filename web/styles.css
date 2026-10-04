@@ -28,7 +28,7 @@
   --accent-deep: #143f31;  /* headings, so colour is in the type not just the gaps */
   --accent-ink: #f9f3e7;
   --accent-wash: #e2eae0;
-  --warn: #8f3d1f;
+  --warn: #96563a;
   --before: #b5663a;
   --after: #2f8f6b;
 
@@ -74,7 +74,7 @@
   --accent-deep: #a8d6c1;
   --accent-ink: #11190f;
   --accent-wash: #1d2820;
-  --warn: #dd9568;
+  --warn: #c08f78;
   --before: #c0784a;
   --after: #4ca985;
 }
@@ -190,8 +190,8 @@ p { margin: 0; text-wrap: pretty; }
   margin-bottom: 0.5rem;
 }
 .machine .out { font-family: var(--deva); line-height: 1.95; font-size: 1rem; }
-.machine .bad .out { color: var(--warn); }
-.machine .bad { background: var(--sunk); }
+.machine .bad .out { color: var(--ink-2); }
+.machine .bad { background: var(--sunk); border-left: 3px solid var(--rule); }
 .machine .good { background: var(--accent-wash); border-left: 3px solid var(--accent); }
 
 /* -------------------------------------------------------------- chapters --- */
@@ -320,7 +320,7 @@ table.metrics td.win { color: var(--accent); font-weight: 600; }
 .row .val { font-family: var(--deva); line-height: 1.95; font-size: 1.02rem; }
 .row.ref .val { font-weight: 500; color: var(--ink); }
 .row.stock .val, .row.tuned .val { font-size: 0.98rem; }
-.row.stock .val { color: var(--warn); }
+.row.stock .val { color: var(--ink-2); }
 .row.tuned .val { color: var(--ink); }
 @media (max-width: 40rem) {
   .row { grid-template-columns: 1fr; gap: 0.1rem; }
@@ -401,7 +401,7 @@ footer a { color: var(--accent); text-underline-offset: 2px; }
 }
 .example .meta { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.9rem; }
 .example .meta .better { color: var(--accent); }
-.example .meta .worse { color: var(--warn); }
+.example .meta .worse { color: var(--warn); font-weight: 600; }
 .example .meta .flag { color: var(--warn); }
 .example .player { margin-bottom: 1rem; }
 
@@ -560,7 +560,7 @@ body::before { z-index: 3; }
   color: var(--ink-3);
   margin-top: 0.35rem;
 }
-.row.stock .gloss-line, .machine .bad .out-note { color: var(--warn); font-style: normal; }
+.row.stock .gloss-line, .machine .bad .out-note { color: var(--ink-3); font-style: normal; }
 .machine .out-note { margin-top: 0.5rem; }
 
 .meter {
@@ -572,7 +572,7 @@ body::before { z-index: 3; }
 }
 .wave.live { height: 2.75rem; width: 100%; }
 .wave.live rect { fill: var(--rule); transition: none; }
-.wave.live rect.on { fill: var(--warn); }
+.wave.live rect.on { fill: var(--accent); }
 
 .live-note {
   margin-top: 0.7rem;
