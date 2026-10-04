@@ -106,6 +106,54 @@ def plausible(english: str, awadhi: str, seen: set[str]) -> tuple[bool, str]:
     return True, ""
 
 
+def split_sentences(text: str) -> list[str]:
+    """Split Awadhi on the danda, keeping pieces the model can actually hold."""
+    parts = [p.strip() for p in re.split(r"[।॥]", text) if p.strip()]
+    # Very short fragments translate badly in isolation; glue them forward.
+    merged: list[str] = []
+    for part in parts:
+        if merged and len(part.split()) < 4:
+            merged[-1] = merged[-1] + " " + part
+        else:
+            merged.append(part)
+    return merged
+
+
+def translate_once(model, text: str, seen: set[str], retries: int) -> tuple[str, str]:
+    why = "no attempt"
+    for _ in range(retries + 1):
+        candidate = clean(model.generate(PROMPT.format(text=text), max_new_tokens=220))
+        ok, why = plausible(candidate, text, seen)
+        if ok:
+            return candidate, ""
+    return "", why
+
+
+def translate_in_pieces(model, awadhi: str, retries: int) -> tuple[str, str]:
+    """Translate sentence by sentence and rejoin.
+
+    The model degenerates on long inputs: it locks into a phrase and repeats it
+    until the token budget runs out. Each sentence on its own stays inside the
+    length where it behaves, and one bad sentence costs a clause rather than the
+    whole answer.
+    """
+    pieces = split_sentences(awadhi)
+    if len(pieces) < 2:
+        return "", "not splittable"
+    out, failed = [], 0
+    local: set[str] = set()
+    for piece in pieces:
+        got, _ = translate_once(model, piece, local, retries)
+        if got:
+            out.append(got.rstrip(".") + ".")
+            local.add(re.sub(r"[^a-z ]", "", got.lower()).strip())
+        else:
+            failed += 1
+    if not out or failed > len(pieces) / 2:
+        return "", f"{failed} of {len(pieces)} sentences failed"
+    return " ".join(out), ""
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -140,20 +188,21 @@ def main() -> int:
     seen: set[str] = set()
     for i, entry in enumerate(todo, 1):
         awadhi = entry.get("quote", "")
-        english, why = "", "no attempt"
-        for _ in range(args.retries + 1):
-            candidate = clean(model.generate(PROMPT.format(text=awadhi),
-                                             max_new_tokens=220))
-            ok, why = plausible(candidate, awadhi, seen)
-            if ok:
-                english = candidate
-                seen.add(re.sub(r"[^a-z ]", "", candidate.lower()).strip())
-                break
+        english, why = translate_once(model, awadhi, seen, args.retries)
+        route = "whole"
+        if not english:
+            # Fall back to sentence-by-sentence before giving up on the answer.
+            english, why2 = translate_in_pieces(model, awadhi, args.retries)
+            route = "pieces"
+            if not english:
+                why = f"{why}; split: {why2}"
+        if english:
+            seen.add(re.sub(r"[^a-z ]", "", english.lower()).strip())
 
         if english:
             entry["english"] = english
             done += 1
-            print(f"  {i}/{len(todo)}  {english[:72]}")
+            print(f"  {i}/{len(todo)}  [{route}] {english[:64]}")
         else:
             entry["english"] = ""
             failed += 1

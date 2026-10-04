@@ -19,8 +19,18 @@ then one of us asks our parents afterwards.
 
 So I did the obvious thing and pointed a transcription app at a recording. It
 handed back standard Hindi. Not a transcription, a translation, and a lossy one:
-`हो थय` came back as `होता है`, `अहय` vanished, `पहिले` flattened into `पहले`. On
-anything longer than a sentence it gave up altogether and repeated a single
+
+| what was said | what came back | both mean |
+|---|---|---|
+| `हो थय` *(ho thay)* | `होता है` *(hota hai)* | "it happens" |
+| `अहय` *(ahay)* | nothing, it vanished | "is" |
+| `पहिले` *(pahile)* | `पहले` *(pahle)* | "before" |
+
+Every row loses the same thing. The meaning survives and the voice does not.
+`अहय` is not a mistake for `है`; it is how you say "is" where my grandparents
+are from, and a model trained on newsreaders has simply never met it.
+
+On anything longer than a sentence it gave up altogether and repeated a single
 syllable until it ran out of room.
 
 That is not one bad app. Awadhi has roughly four million speakers and almost no
@@ -43,9 +53,11 @@ settings, so the adapter is the only thing that differs.
 | Characters wrong | 0.6200 | **0.3357** |
 | Awadhi marker words kept | 5.1% | **45.3%** |
 
-The last row is the one I care about. Those are words like `अहय`, `थय`, `होत`,
-`जौन`, the ones a general model quietly deletes. It went from keeping one in
-twenty to keeping almost half.
+The last row is the one I care about. Those are the everyday Awadhi words a
+general model quietly deletes: `अहय` *(ahay, "is")*, `थय` *(thay, the past
+marker)*, `होत` *(hot, "happens")*, `जौन` *(jaun, "which")*. Function words,
+the kind you cannot speak a sentence without. The adapter went from keeping one
+in twenty to keeping almost half.
 
 The adapter is **8.7 MB**. It trained in **52 minutes** on a laptop GPU.
 
@@ -58,9 +70,9 @@ reaches the token limit, so it produces more errors than the reference has
 words.
 
 ```
-said      ई लम्बा पेड अहय ।
-before    इज़ंबा पेर आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख ...
-after     ई लम्बा पेर अहय ।
+said      ई लम्बा पेड अहय ।            "this is a tall tree"
+before    इज़ंबा पेर आख आख आख आख आख आख आख आख आख आख आख आख आख ...
+after     ई लम्बा पेर अहय ।            "this is a tall tree"
 ```
 
 It is also why the adapted model decodes about seven times faster. It stops when
