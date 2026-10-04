@@ -199,10 +199,23 @@ function renderExhibit(m) {
   const s = (m.samples || [])[0];
   if (!root || !s) return;
   document.getElementById("ex-said").textContent = s.reference;
+  // Without the English, both panels are just script to most readers and the
+  // comparison says nothing.
   document.getElementById("ex-gloss").textContent =
-    `One recording, ${s.duration_s.toFixed(1)} seconds long.`;
-  document.getElementById("ex-stock").textContent = trim(s.baseline, 150);
-  document.getElementById("ex-tuned").textContent = trim(s.adapted, 150);
+    s.meaning ? `"${s.meaning}"` : `One recording, ${s.duration_s.toFixed(1)} seconds long.`;
+
+  const stock = document.getElementById("ex-stock");
+  stock.textContent = trim(s.baseline, 150);
+  const tuned = document.getElementById("ex-tuned");
+  tuned.textContent = trim(s.adapted, 150);
+
+  const note = (host, text) => {
+    if (!text) return;
+    const p = el("p", "out-note", text);
+    host.parentNode.appendChild(p);
+  };
+  note(stock, s.baseline_note);
+  note(tuned, s.adapted_note || (s.meaning ? `"${s.meaning}"` : ""));
   root.hidden = false;
 }
 

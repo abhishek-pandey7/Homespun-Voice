@@ -76,6 +76,36 @@ def strip_dashes(text: str) -> str:
                 .replace("  ", " ").strip())
 
 
+SAMPLE_TRANSLATIONS = Path("data/story/sample_translations.json")
+
+
+def load_translations() -> dict[str, str]:
+    if SAMPLE_TRANSLATIONS.exists():
+        return json.loads(SAMPLE_TRANSLATIONS.read_text(encoding="utf-8"))
+    return {}
+
+
+def describe_failure(text: str) -> str:
+    """Say in English what a degenerate transcript is doing.
+
+    Translating one of these is meaningless: a line that repeats one syllable
+    forty times has no English, and inventing one would flatter it. Naming the
+    behaviour is both honest and the thing a reader needs to see.
+    """
+    words = text.split()
+    if len(words) < 6:
+        return ""
+    counts: dict[str, int] = {}
+    for w in words:
+        counts[w] = counts.get(w, 0) + 1
+    token, n = max(counts.items(), key=lambda kv: kv[1])
+    if n >= 5 and n / len(words) > 0.4:
+        return f"Not a sentence. It repeats {token} {n} times."
+    if len(set(words)) / len(words) < 0.4:
+        return "Not a sentence. It loops over a handful of words."
+    return ""
+
+
 def utt_cer(ref: str, hyp: str) -> float:
     r = normalise(ref)
     return jiwer.cer(r, normalise(hyp)) if r else 0.0
@@ -93,6 +123,7 @@ def main() -> int:
     args = ap.parse_args()
 
     WEB_DATA.mkdir(parents=True, exist_ok=True)
+    translations = load_translations()
     WEB_AUDIO.mkdir(parents=True, exist_ok=True)
 
     # ------------------------------------------------------------- metrics ---
@@ -131,6 +162,9 @@ def main() -> int:
             "adapted": lora[u]["hypothesis"],
             "cer_baseline": round(utt_cer(base[u]["reference"], base[u]["hypothesis"]), 3),
             "cer_adapted": round(utt_cer(base[u]["reference"], lora[u]["hypothesis"]), 3),
+            "meaning": translations.get(base[u]["reference"], ""),
+            "baseline_note": describe_failure(base[u]["hypothesis"]),
+            "adapted_note": describe_failure(lora[u]["hypothesis"]),
         })
 
     # --- example clips for the try-it page --------------------------------
@@ -166,6 +200,9 @@ def main() -> int:
             "cer_baseline": round(utt_cer(base[u]["reference"], base[u]["hypothesis"]), 3),
             "cer_adapted": round(utt_cer(base[u]["reference"], lora[u]["hypothesis"]), 3),
             "peaks": waveform_peaks(Path(row["audio_path"])),
+            "meaning": translations.get(base[u]["reference"], ""),
+            "baseline_note": describe_failure(base[u]["hypothesis"]),
+            "adapted_note": describe_failure(lora[u]["hypothesis"]),
         })
     (WEB_DATA / "examples.json").write_text(
         json.dumps({"examples": examples}, ensure_ascii=False, indent=2), encoding="utf-8")

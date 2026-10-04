@@ -41,7 +41,10 @@
       "baseline": "इज़ंबा पेर आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आख आ",
       "adapted": "ई लम्बा पेर अहय ।",
       "cer_baseline": 9.667,
-      "cer_adapted": 0.067
+      "cer_adapted": 0.067,
+      "meaning": "He is a long-lived person.",
+      "baseline_note": "Not a sentence. It repeats आख 46 times.",
+      "adapted_note": ""
     },
     {
       "utt_id": "281474976718393",
@@ -51,7 +54,10 @@
       "baseline": "अमार मोब तिलात बाः अप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप",
       "adapted": "हमार मुब तिरात बा ।",
       "cer_baseline": 8.294,
-      "cer_adapted": 0.118
+      "cer_adapted": 0.118,
+      "meaning": "We are in a hurry.",
+      "baseline_note": "Not a sentence. It repeats आप 44 times.",
+      "adapted_note": ""
     },
     {
       "utt_id": "281474976715952",
@@ -61,7 +67,10 @@
       "baseline": "अम नाव फ्यावा माटन अप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आ�",
       "adapted": "हम नाव से आवा बाटेन ।",
       "cer_baseline": 7.474,
-      "cer_adapted": 0.053
+      "cer_adapted": 0.053,
+      "meaning": "We are coming by boat.",
+      "baseline_note": "Not a sentence. It repeats आप 43 times.",
+      "adapted_note": ""
     },
     {
       "utt_id": "281474976725419",
@@ -71,7 +80,10 @@
       "baseline": "राँ बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बादा बा",
       "adapted": "हम कल उ उनका वच्चा देबय ।",
       "cer_baseline": 7.476,
-      "cer_adapted": 0.143
+      "cer_adapted": 0.143,
+      "meaning": "We will give birth to their child tomorrow.",
+      "baseline_note": "Not a sentence. It repeats बादा 32 times.",
+      "adapted_note": ""
     },
     {
       "utt_id": "281474976723559",
@@ -81,7 +93,10 @@
       "baseline": "आम भी आन श्प्रद नाव आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप आप �",
       "adapted": "हम बिहान स्कूल ना अउव ।",
       "cer_baseline": 6.81,
-      "cer_adapted": 0.095
+      "cer_adapted": 0.095,
+      "meaning": "We don't go to school in the morning.",
+      "baseline_note": "Not a sentence. It repeats आप 44 times.",
+      "adapted_note": ""
     }
   ]
 }

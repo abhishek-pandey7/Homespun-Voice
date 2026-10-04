@@ -114,14 +114,18 @@ function renderExamples(data) {
     card.appendChild(miniPlayer(`assets/examples/${ex.clip}`, ex.peaks, ex.duration_s));
 
     const trim = (t) => (t.length > 180 ? t.slice(0, 180) + " ..." : t);
-    [["Said", "ref", ex.reference],
-     ["Before", "stock", trim(ex.baseline)],
-     ["After", "tuned", trim(ex.adapted)]].forEach(([tag, cls, text]) => {
-      const row = el("div", `row ${cls}`);
-      row.appendChild(el("span", "tag", tag));
-      row.appendChild(el("span", "val", text));
-      card.appendChild(row);
-    });
+    [["Said", "ref", ex.reference, ex.meaning ? `"${ex.meaning}"` : ""],
+     ["Before", "stock", trim(ex.baseline), ex.baseline_note],
+     ["After", "tuned", trim(ex.adapted), ex.adapted_note]].forEach(
+      ([tag, cls, text, gloss]) => {
+        const row = el("div", `row ${cls}`);
+        row.appendChild(el("span", "tag", tag));
+        const v = el("span", "val");
+        v.appendChild(el("span", null, text));
+        if (gloss) v.appendChild(el("span", "gloss-line", gloss));
+        row.appendChild(v);
+        card.appendChild(row);
+      });
 
     // A regression on the page without explanation reads as a broken demo
     // rather than a measured limitation, so it says which one it is.
@@ -227,6 +231,64 @@ async function runOn(blobOrFile, label) {
   }
 }
 
+/* A live level meter while recording. Without it the only feedback is a button
+   that says Stop, and there is no way to tell whether the microphone is picking
+   anything up until after you have finished speaking. Reads the analyser each
+   frame and writes to SVG bars; no React, no state, nothing retained. */
+function startMeter(stream) {
+  const host = document.getElementById("meter");
+  if (!host) return () => {};
+  host.textContent = "";
+  host.hidden = false;
+
+  const BARS = 48;
+  const svg = svgEl("svg", {
+    class: "wave live", viewBox: `0 0 ${BARS * 3} 40`,
+    preserveAspectRatio: "none", "aria-hidden": "true",
+  });
+  const bars = [];
+  for (let i = 0; i < BARS; i++) {
+    const r = svgEl("rect", { x: i * 3, y: 19, width: 2, height: 2, rx: 1 });
+    svg.appendChild(r);
+    bars.push(r);
+  }
+  host.appendChild(svg);
+
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const source = ctx.createMediaStreamSource(stream);
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.7;
+  source.connect(analyser);
+  const data = new Uint8Array(analyser.frequencyBinCount);
+
+  let raf = null;
+  const draw = () => {
+    analyser.getByteFrequencyData(data);
+    const step = Math.floor(data.length / BARS) || 1;
+    for (let i = 0; i < BARS; i++) {
+      let sum = 0;
+      for (let j = 0; j < step; j++) sum += data[i * step + j] || 0;
+      const level = sum / step / 255;
+      const h = Math.max(2, level * 38);
+      bars[i].setAttribute("height", h.toFixed(1));
+      bars[i].setAttribute("y", ((40 - h) / 2).toFixed(1));
+      bars[i].classList.toggle("on", level > 0.04);
+    }
+    raf = requestAnimationFrame(draw);
+  };
+  draw();
+
+  // Returned so the caller can tear it down; an analyser left running holds the
+  // microphone open and keeps a frame loop alive for the rest of the session.
+  return () => {
+    if (raf) cancelAnimationFrame(raf);
+    try { source.disconnect(); ctx.close(); } catch (e) { /* already closed */ }
+    host.hidden = true;
+    host.textContent = "";
+  };
+}
+
 function setupRecorder() {
   const btn = document.getElementById("rec");
   let recorder = null;
@@ -241,8 +303,10 @@ function setupRecorder() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       recorder = new MediaRecorder(stream);
       chunks = [];
+      const stopMeter = startMeter(stream);
       recorder.ondataavailable = (e) => chunks.push(e.data);
       recorder.onstop = async () => {
+        stopMeter();
         stream.getTracks().forEach((t) => t.stop());
         btn.textContent = "Record";
         btn.classList.remove("recording");

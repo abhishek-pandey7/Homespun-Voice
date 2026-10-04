@@ -106,7 +106,10 @@
         0,
         0,
         0
-      ]
+      ],
+      "meaning": "He is a long-lived person.",
+      "baseline_note": "Not a sentence. It repeats आख 46 times.",
+      "adapted_note": ""
     },
     {
       "clip": "example2.wav",
@@ -214,7 +217,10 @@
         0,
         0,
         0
-      ]
+      ],
+      "meaning": "They drank tea.",
+      "baseline_note": "",
+      "adapted_note": "Not a sentence. It repeats वे 66 times."
     },
     {
       "clip": "example3.wav",
@@ -322,7 +328,10 @@
         0,
         0,
         0
-      ]
+      ],
+      "meaning": "Everyone is going.",
+      "baseline_note": "",
+      "adapted_note": ""
     },
     {
       "clip": "example4.wav",
@@ -430,7 +439,10 @@
         1,
         0,
         0
-      ]
+      ],
+      "meaning": "Our society is connected to marriage,  the festival of  \"Mauni\", \"Haldi\", and \"Rasm",
+      "baseline_note": "",
+      "adapted_note": ""
     }
   ]
 }

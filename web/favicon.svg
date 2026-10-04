@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    :root { --b: rgb(243, 236, 223); --t: rgb(29, 92, 72); }
+    @media (prefers-color-scheme: dark) {
+      :root { --b: rgb(22, 18, 14); --t: rgb(134, 194, 169); }
+    }
+  </style>
+  <rect width="32" height="32" rx="6" fill="var(--b)"/>
+  <rect x="5" y="2" width="4" height="28" rx="1" fill="var(--t)"/>
+  <rect x="13" y="2" width="4" height="28" rx="1" fill="var(--t)"/>
+  <rect x="21" y="2" width="4" height="28" rx="1" fill="var(--t)"/>
+  <rect x="2" y="5" width="28" height="4" rx="1" fill="var(--t)"/>
+  <rect x="2" y="13" width="28" height="4" rx="1" fill="var(--t)"/>
+  <rect x="2" y="21" width="28" height="4" rx="1" fill="var(--t)"/>
+  <rect x="5" y="5" width="4" height="4" rx="1" fill="var(--t)"/>
+  <rect x="5" y="21" width="4" height="4" rx="1" fill="var(--t)"/>
+  <rect x="13" y="13" width="4" height="4" rx="1" fill="var(--t)"/>
+  <rect x="21" y="5" width="4" height="4" rx="1" fill="var(--t)"/>
+  <rect x="21" y="21" width="4" height="4" rx="1" fill="var(--t)"/>
+</svg>

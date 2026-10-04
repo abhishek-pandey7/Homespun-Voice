@@ -547,3 +547,29 @@ body::before { z-index: 3; }
 }
 .bar .v b { font-weight: 600; color: var(--ink); }
 .chart-note { font-size: 0.85rem; color: var(--ink-3); margin-top: 1.25rem; }
+
+/* English beneath a Devanagari line, so the comparison reads without the
+   script. Set apart from the transcript it explains rather than beside it. */
+.gloss-line,
+.out-note {
+  display: block;
+  font-family: var(--latin);
+  font-size: 0.84rem;
+  font-style: italic;
+  line-height: 1.55;
+  color: var(--ink-3);
+  margin-top: 0.35rem;
+}
+.row.stock .gloss-line, .machine .bad .out-note { color: var(--warn); font-style: normal; }
+.machine .out-note { margin-top: 0.5rem; }
+
+.meter {
+  background: var(--sunk);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.9rem;
+}
+.wave.live { height: 2.75rem; width: 100%; }
+.wave.live rect { fill: var(--rule); transition: none; }
+.wave.live rect.on { fill: var(--warn); }
