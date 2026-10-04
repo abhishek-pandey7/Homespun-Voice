@@ -195,6 +195,15 @@ p { margin: 0; text-wrap: pretty; }
   line-height: 2.05;
 }
 
+.english {
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--rule);
+  max-width: var(--measure);
+}
+
 .player { display: flex; align-items: center; gap: 0.9rem; }
 
 .play {

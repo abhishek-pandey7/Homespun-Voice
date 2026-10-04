@@ -162,6 +162,10 @@ function renderStory(story) {
     (chapter.entries || []).forEach((entry) => {
       const item = el("article", "entry");
       item.appendChild(el("p", "quote", entry.quote || ""));
+      // Translation sits beneath the Awadhi, never in place of it. Entries the
+      // translator could not do confidently carry no english field, and show
+      // nothing rather than a guess.
+      if (entry.english) item.appendChild(el("p", "english", entry.english));
 
       if (entry.clip) {
         const audio = new Audio();
