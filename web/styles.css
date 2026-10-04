@@ -14,17 +14,20 @@
  */
 
 :root {
-  --paper: #f3f4f3;
-  --surface: #fbfbfa;
-  --sunk: #eceeec;
-  --ink: #14171a;
-  --ink-2: #4c5258;
-  --ink-3: #797f85;
-  --rule: #dcdfdc;
-  --accent: #1f5c4a;
-  --accent-ink: #ffffff;
-  --accent-wash: #e6ede9;
-  --warn: #8a3a22;
+  /* Warm paper with a green accent, not the beige and brass every heritage
+     page reaches for. The warmth belongs to the page; the accent stays cool so
+     the two never blur into the same sepia wash. */
+  --paper: #f4efe6;
+  --surface: #fbf8f2;
+  --sunk: #ece4d7;
+  --ink: #241f19;
+  --ink-2: #5f564a;
+  --ink-3: #8c8273;
+  --rule: #ded4c3;
+  --accent: #1d5c48;
+  --accent-ink: #fbf8f2;
+  --accent-wash: #e4ebe2;
+  --warn: #8f3d1f;
 
   --measure: 36rem;
   --radius: 4px;
@@ -39,33 +42,35 @@
 /* The script sets data-theme on load, so this only governs the first paint
    before it runs. Light is the default; the toggle and localStorage decide
    thereafter. */
+/* Dark keeps the same warmth rather than flipping to a cold grey, so the
+   toggle reads as the lights going down on one room, not a move to another. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="dark"]) {
-    --paper: #101214;
-    --surface: #161a1c;
-    --sunk: #1b1f22;
-    --ink: #eceeec;
-    --ink-2: #a7aeb2;
-    --ink-3: #777e83;
-    --rule: #272c2f;
-    --accent: #6fb39c;
-    --accent-ink: #0d1412;
-    --accent-wash: #16241f;
-    --warn: #d08a6c;
+    --paper: #16120e;
+    --surface: #1d1813;
+    --sunk: #241e17;
+    --ink: #efe9df;
+    --ink-2: #b4aa9b;
+    --ink-3: #847b6d;
+    --rule: #332b22;
+    --accent: #7fbca4;
+    --accent-ink: #11190f;
+    --accent-wash: #1b251e;
+    --warn: #d98f63;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #101214;
-  --surface: #161a1c;
-  --sunk: #1b1f22;
-  --ink: #eceeec;
-  --ink-2: #a7aeb2;
-  --ink-3: #777e83;
-  --rule: #272c2f;
-  --accent: #6fb39c;
-  --accent-ink: #0d1412;
-  --accent-wash: #16241f;
-  --warn: #d08a6c;
+  --paper: #16120e;
+  --surface: #1d1813;
+  --sunk: #241e17;
+  --ink: #efe9df;
+  --ink-2: #b4aa9b;
+  --ink-3: #847b6d;
+  --rule: #332b22;
+  --accent: #7fbca4;
+  --accent-ink: #11190f;
+  --accent-wash: #1b251e;
+  --warn: #d98f63;
 }
 
 * { box-sizing: border-box; }
@@ -76,6 +81,14 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background: var(--paper);
+  /* A barely-there warm bloom at the top, so a long page of text is not a flat
+     fill. Fixed, so it does not travel with the scroll. */
+  background-image: radial-gradient(
+    120% 70% at 50% -10%,
+    rgb(255 255 255 / 0.55),
+    rgb(255 255 255 / 0) 60%
+  );
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--latin);
   font-size: 1rem;
@@ -83,6 +96,22 @@ body {
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Paper grain. Fixed and pointer-events none so it never repaints on scroll,
+   which is what makes this cheap enough to leave on. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.26'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+:root[data-theme="dark"] body::before { mix-blend-mode: screen; opacity: 0.16; }
+
+body > * { position: relative; z-index: 2; }
 
 .wrap { width: 100%; max-width: 64rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
 .col { max-width: var(--measure); }
@@ -300,7 +329,13 @@ footer a { color: var(--accent); text-underline-offset: 2px; }
 
 /* ------------------------------------------------------------------- nav --- */
 
-.nav { border-bottom: 1px solid var(--rule); background: var(--paper); position: sticky; top: 0; z-index: 10; }
+.nav {
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px);
+  position: sticky; top: 0; z-index: 10;
+}
+@supports not (backdrop-filter: blur(1px)) { .nav { background: var(--paper); } }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; height: 60px; }
 .brand { font-weight: 600; letter-spacing: -0.01em; text-decoration: none; color: var(--ink); font-size: 1.05rem; }
 .nav-links { display: flex; gap: clamp(0.9rem, 3vw, 1.75rem); }
