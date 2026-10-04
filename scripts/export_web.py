@@ -115,20 +115,33 @@ def main() -> int:
     print(f"[ok] {WEB_DATA / 'chapters.json'}")
 
     manifest = {r["utt_id"]: r for r in load_jsonl(MANIFEST)}
-    wanted = [str(e.get("utt_id")) for ch in story.get("chapters", [])
-              for e in ch.get("entries", [])]
+
+    # Clips are published as audio1.wav, audio2.wav, ... in reading order rather
+    # than under their 15-digit corpus ids. The ids are meaningless to a reader
+    # and awkward to reference in a demo; the mapping is kept in chapters.json so
+    # nothing is lost.
+    for stale in WEB_AUDIO.glob("*.wav"):
+        stale.unlink()
+
     copied = missing = 0
-    for utt_id in wanted:
-        row = manifest.get(utt_id)
-        if not row:
-            missing += 1
-            continue
-        src = Path(row["audio_path"])
-        if src.exists():
-            shutil.copyfile(src, WEB_AUDIO / f"{utt_id}.wav")
-            copied += 1
-        else:
-            missing += 1
+    n = 0
+    for chapter in story.get("chapters", []):
+        for entry in chapter.get("entries", []):
+            utt_id = str(entry.get("utt_id"))
+            row = manifest.get(utt_id)
+            n += 1
+            name = f"audio{n}.wav"
+            entry["clip"] = name
+            if row and Path(row["audio_path"]).exists():
+                shutil.copyfile(Path(row["audio_path"]), WEB_AUDIO / name)
+                copied += 1
+            else:
+                entry["clip"] = ""
+                missing += 1
+
+    # Rewrite the published copy so the reader can resolve clips by name.
+    (WEB_DATA / "chapters.json").write_text(
+        json.dumps(story, ensure_ascii=False, indent=2), encoding="utf-8")
     size_mb = sum(f.stat().st_size for f in WEB_AUDIO.glob("*.wav")) / 1024**2
     print(f"[ok] {WEB_AUDIO}: {copied} clips ({size_mb:.1f} MB), {missing} missing")
     return 0

@@ -41,6 +41,10 @@ web/assets/audio/**
 !web/assets/audio/.gitkeep
 !web/assets/audio/*.mp3
 
+# --- demo narration recorded for the walkthrough ---
+!web/assets/demo/
+!web/assets/demo/*.mp3
+
 # --- story clips served by the deployed reader ---
 # Deliberately tracked. Render serves the static site straight from the repo,
 # so a clip that is not committed 404s in the browser. These are the handful of

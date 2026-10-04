@@ -62,7 +62,7 @@ function renderStory(story) {
       const audio = el("audio");
       audio.controls = true;
       audio.preload = "none";
-      audio.src = `assets/clips/${entry.utt_id}.wav`;
+      audio.src = `assets/clips/${entry.clip || entry.utt_id + ".wav"}`;
       // A clip can be absent if the export skipped it; drop the player rather
       // than leaving a broken control on the page.
       audio.addEventListener("error", () => audio.remove());
