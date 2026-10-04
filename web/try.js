@@ -264,6 +264,42 @@ function applyTheme(mode) {
   });
 }
 
+/* ---------------------------------------------------------------- wordwall --- */
+
+/* The page's texture is the dialect itself: the marker words a general model
+   drops, set large and faint behind everything. Real DOM text in the loaded
+   Devanagari face rather than an SVG data URI, because a data URI falls back to
+   whatever system font exists and Devanagari is exactly where that fails.
+   Fixed and pointer-events none, so it costs one paint and never scrolls. */
+function buildWordwall() {
+  if (document.querySelector(".wordwall")) return;
+
+  const WORDS = [
+    "अहय", "थय", "होत", "जौन",
+    "कय", "मा", "पहिले", "अउर",
+    "रसम", "बियाह", "जनम", "थीं",
+    "वोहके", "अव", "कीन",
+  ];
+
+  const wall = document.createElement("div");
+  wall.className = "wordwall";
+  wall.setAttribute("aria-hidden", "true");
+
+  // Deterministic placement from the index, so the pattern is stable between
+  // loads and across pages instead of reshuffling on every visit.
+  for (let i = 0; i < 26; i++) {
+    const w = document.createElement("span");
+    w.textContent = WORDS[i % WORDS.length];
+    const row = Math.floor(i / 3);
+    w.style.top = `${row * 17 + ((i % 3) * 5)}%`;
+    w.style.left = `${(i % 3) * 36 + ((i % 2) * 7) - 6}%`;
+    w.style.fontSize = `${[7.5, 4.5, 11, 5.5, 8.5, 6][i % 6]}rem`;
+    w.style.transform = `rotate(${(i % 4) - 1.5}deg)`;
+    wall.appendChild(w);
+  }
+  document.body.appendChild(wall);
+}
+
 function setupTheme() {
   let saved = null;
   try { saved = localStorage.getItem("homespun-theme"); } catch (e) { /* blocked */ }
@@ -282,6 +318,7 @@ function setupTheme() {
 
 (async function () {
   setupTheme();
+  buildWordwall();
   try {
     const res = await fetch("data/examples.json");
     if (res.ok) renderExamples(await res.json());

@@ -113,7 +113,6 @@ body::before {
 }
 :root[data-theme="dark"] body::before { mix-blend-mode: screen; opacity: 0.16; }
 
-body > * { position: relative; z-index: 2; }
 
 .wrap { width: 100%; max-width: 64rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
 .col { max-width: var(--measure); }
@@ -433,3 +432,33 @@ progress { width: 100%; max-width: 24rem; height: 6px; display: block; margin-bo
   transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 .theme:hover { color: var(--ink); border-color: var(--accent); }
+
+.wordwall {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  /* Faded at the edges so words never collide with the nav or the footer. */
+  -webkit-mask-image: radial-gradient(130% 90% at 50% 40%, #000 35%, transparent 85%);
+  mask-image: radial-gradient(130% 90% at 50% 40%, #000 35%, transparent 85%);
+}
+.wordwall span {
+  position: absolute;
+  font-family: var(--deva);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--accent);
+  opacity: 0.075;
+}
+:root[data-theme="dark"] .wordwall span { opacity: 0.1; }
+
+/* Content sits above the wall; the grain stays above both. */
+body > *:not(.wordwall) { position: relative; z-index: 2; }
+body::before { z-index: 3; }
+
+@media (max-width: 48rem) {
+  .wordwall span { opacity: 0.04; }
+}
