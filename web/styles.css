@@ -89,12 +89,17 @@ body {
   background: var(--paper);
   /* A barely-there warm bloom at the top, so a long page of text is not a flat
      fill. Fixed, so it does not travel with the scroll. */
-  background-image: radial-gradient(
-    120% 70% at 50% -10%,
-    rgb(255 255 255 / 0.55),
-    rgb(255 255 255 / 0) 60%
-  );
+  background-image:
+    radial-gradient(100% 60% at 50% -8%, rgb(255 252 244 / 0.9), rgb(255 252 244 / 0) 55%),
+    radial-gradient(80% 50% at 85% 8%, rgb(29 92 72 / 0.07), rgb(29 92 72 / 0) 60%),
+    radial-gradient(70% 45% at 8% 22%, rgb(181 102 58 / 0.06), rgb(181 102 58 / 0) 60%);
   background-attachment: fixed;
+}
+
+:root[data-theme="dark"] body {
+  background-image:
+    radial-gradient(100% 60% at 50% -8%, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0) 55%),
+    radial-gradient(80% 50% at 85% 8%, rgb(134 194 169 / 0.07), rgb(134 194 169 / 0) 60%);
   color: var(--ink);
   font-family: var(--latin);
   font-size: 1rem;
@@ -149,7 +154,9 @@ p { margin: 0; text-wrap: pretty; }
   font-size: clamp(2.6rem, 9vw, 5.2rem);
   line-height: 0.98;
   margin-bottom: 1.25rem;
+  color: var(--accent);
 }
+:root[data-theme="dark"] .hero h1 { color: var(--accent-deep); }
 .hero .lede {
   font-size: clamp(1.05rem, 2.2vw, 1.3rem);
   color: var(--ink-2);
@@ -465,7 +472,7 @@ progress { width: 100%; max-width: 24rem; height: 6px; display: block; margin-bo
   line-height: 1;
   white-space: nowrap;
   color: var(--accent);
-  opacity: 0.075;
+  opacity: 0.14;
 }
 :root[data-theme="dark"] .wordwall span { opacity: 0.1; }
 
@@ -474,7 +481,8 @@ body > *:not(.wordwall) { position: relative; z-index: 2; }
 body::before { z-index: 3; }
 
 @media (max-width: 48rem) {
-  .wordwall span { opacity: 0.04; }
+  .wordwall span { opacity: 0.1; }
+  :root[data-theme="dark"] .wordwall span { opacity: 0.08; }
 }
 
 .example .why {
