@@ -81,3 +81,7 @@ desktop.ini
 # --- archives (corpus downloads) ---
 *.zip
 *.tar.gz
+
+# --- ONNX export artefacts (regenerated, hundreds of MB) ---
+models/homespun-merged/
+models/homespun-onnx/

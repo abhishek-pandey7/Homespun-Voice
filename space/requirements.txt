@@ -1,0 +1,7 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1
+transformers==4.46.3
+peft==0.13.2
+gradio==5.5.0
+numpy<2
+soxr==0.5.0.post1
