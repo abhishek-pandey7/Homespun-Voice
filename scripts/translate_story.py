@@ -79,6 +79,19 @@ def plausible(english: str, awadhi: str, seen: set[str]) -> tuple[bool, str]:
         return False, "still contains Devanagari"
     if len(english) > len(awadhi) * 4:
         return False, "implausibly long"
+    # The model degenerates on long sources the same way the ASR does: it locks
+    # into a phrase and repeats it. A length cap does not catch this, because
+    # four times a long source is still long.
+    words = english.lower().split()
+    if len(words) >= 10:
+        grams = [" ".join(words[i:i + 5]) for i in range(len(words) - 4)]
+        worst = max((grams.count(g) for g in set(grams)), default=0)
+        if worst > 2:
+            return False, f"repeats a phrase {worst} times"
+        # A long answer built from very few distinct words is the same failure
+        # wearing a different shape.
+        if len(set(words)) / len(words) < 0.4:
+            return False, "too few distinct words"
     low = english.lower()
     hit = next((e for e in ECHOES if e in low), None)
     if hit:

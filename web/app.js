@@ -344,18 +344,29 @@ function buildWordwall() {
   wall.className = "wordwall";
   wall.setAttribute("aria-hidden", "true");
 
-  // Deterministic placement from the index, so the pattern is stable between
-  // loads and across pages instead of reshuffling on every visit.
-  for (let i = 0; i < 26; i++) {
+  // Deterministic scatter from a small integer hash, so the layout is stable
+  // across loads and pages but is not the column grid that `i % 3` produced.
+  const rand = (seed) => {
+    const x = Math.sin(seed * 12.9898) * 43758.5453;
+    return x - Math.floor(x);
+  };
+
+  for (let i = 0; i < 30; i++) {
     const w = document.createElement("span");
     w.textContent = WORDS[i % WORDS.length];
-    const row = Math.floor(i / 3);
-    w.style.top = `${row * 17 + ((i % 3) * 5)}%`;
-    w.style.left = `${(i % 3) * 36 + ((i % 2) * 7) - 6}%`;
-    w.style.fontSize = `${[7.5, 4.5, 11, 5.5, 8.5, 6][i % 6]}rem`;
-    w.style.transform = `rotate(${(i % 4) - 1.5}deg)`;
+    // Jitter a loose grid rather than placing at random: pure randomness
+    // clumps and leaves holes, a grid alone reads as a grid.
+    const cols = 4;
+    const cx = (i % cols) / cols;
+    const cy = Math.floor(i / cols) / Math.ceil(30 / cols);
+    w.style.left = `${(cx + (rand(i * 3 + 1) - 0.5) * 0.3) * 100}%`;
+    w.style.top = `${(cy + (rand(i * 3 + 2) - 0.5) * 0.22) * 100}%`;
+    w.style.fontSize = `${3.5 + rand(i * 3 + 3) * 8}rem`;
+    w.style.transform = `rotate(${(rand(i * 7 + 5) - 0.5) * 14}deg)`;
+    w.style.opacity = `${0.55 + rand(i * 11 + 9) * 0.65}`;
     wall.appendChild(w);
   }
+
   document.body.appendChild(wall);
 }
 

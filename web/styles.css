@@ -465,6 +465,9 @@ progress { width: 100%; max-width: 24rem; height: 6px; display: block; margin-bo
   -webkit-mask-image: radial-gradient(130% 90% at 50% 40%, #000 35%, transparent 85%);
   mask-image: radial-gradient(130% 90% at 50% 40%, #000 35%, transparent 85%);
 }
+.wordwall { opacity: 0.14; }
+:root[data-theme="dark"] .wordwall { opacity: 0.1; }
+
 .wordwall span {
   position: absolute;
   font-family: var(--deva);
@@ -472,9 +475,8 @@ progress { width: 100%; max-width: 24rem; height: 6px; display: block; margin-bo
   line-height: 1;
   white-space: nowrap;
   color: var(--accent);
-  opacity: 0.14;
 }
-:root[data-theme="dark"] .wordwall span { opacity: 0.1; }
+
 
 /* Content sits above the wall; the grain stays above both. */
 body > *:not(.wordwall) { position: relative; z-index: 2; }
