@@ -53,6 +53,12 @@ web/assets/audio/**
 !web/assets/clips/
 !web/assets/clips/*.wav
 
+# The four worked examples on the Try it page. Same reason as the clips: they
+# are served by the deployed site, so an untracked one 404s in the browser
+# while working perfectly in local testing.
+!web/assets/examples/
+!web/assets/examples/*.wav
+
 # --- reports: keep written reports, drop raw run dumps ---
 reports/**
 !reports/.gitkeep
