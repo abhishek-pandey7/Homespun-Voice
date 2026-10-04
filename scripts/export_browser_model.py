@@ -34,28 +34,38 @@ def main() -> int:
     onnx_dir = OUT / "onnx"
     onnx_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- merge the two decoder graphs -------------------------------------
-    merged = SRC / "decoder_model_merged.onnx"
+    from onnxruntime.quantization import QuantType, quantize_dynamic
+
+    # Quantise the decoder graphs BEFORE merging them. A merged decoder is built
+    # around an If node, and quantize_dynamic does not descend into subgraphs:
+    # merging first and quantising after returned the decoder at its original
+    # 739 MB, having quantised almost nothing. Flat graphs quantise properly,
+    # and merge_decoders deduplicates the shared initialisers afterwards.
+    q_plain = SRC / "decoder_model_q.onnx"
+    q_past = SRC / "decoder_with_past_model_q.onnx"
+    for src, dst in ((SRC / "decoder_model.onnx", q_plain),
+                     (SRC / "decoder_with_past_model.onnx", q_past)):
+        if dst.exists():
+            print(f"[skip] {dst.name} exists ({mb(dst):.0f} MB)")
+            continue
+        print(f"quantising {src.name} ({mb(src):.0f} MB) ...")
+        quantize_dynamic(model_input=str(src), model_output=str(dst),
+                         weight_type=QuantType.QUInt8, per_channel=False,
+                         reduce_range=False)
+        print(f"  -> {mb(dst):.0f} MB")
+
+    merged = onnx_dir / "decoder_model_merged_quantized.onnx"
     if not merged.exists():
         from optimum.onnx import merge_decoders
 
         # strict=False: the no-past graph emits encoder present-key-values that
-        # the with-past graph does not, which is expected for Whisper and not a
-        # reason to refuse the merge.
-        merge_decoders(
-            str(SRC / "decoder_model.onnx"),
-            str(SRC / "decoder_with_past_model.onnx"),
-            save_path=str(merged),
-            strict=False,
-        )
-    print(f"merged decoder: {mb(merged):.0f} MB")
-
-    # --- quantise ----------------------------------------------------------
-    from onnxruntime.quantization import QuantType, quantize_dynamic
+        # the with-past graph does not. Expected for Whisper, not a reason to
+        # refuse the merge.
+        merge_decoders(str(q_plain), str(q_past), save_path=str(merged), strict=False)
+    print(f"merged quantised decoder: {mb(merged):.0f} MB")
 
     jobs = [
         (SRC / "encoder_model.onnx", onnx_dir / "encoder_model_quantized.onnx"),
-        (merged, onnx_dir / "decoder_model_merged_quantized.onnx"),
     ]
     for src, dst in jobs:
         if dst.exists():

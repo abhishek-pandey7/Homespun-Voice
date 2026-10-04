@@ -131,7 +131,31 @@ python scripts/build_story.py
 python scripts/narrate.py
 ```
 
+## The site
+
+Four pages, served as static files with no build step:
+
+| | |
+|---|---|
+| **Listen** | The testimony. Each Awadhi quotation plays in the speaker's own voice, with a machine translation beneath it. |
+| **Try it** | Four held-out recordings already transcribed by both models, then record or upload your own and run the adapter in your browser. |
+| **Evidence** | Word and character error rates, by subset, against the frozen baseline. |
+| **Method** | How it was trained, and the four things the numbers do not say. |
+
+The in-browser demo runs through Transformers.js against an int8 ONNX build of
+the adapted model. Audio never leaves the machine, which matters more than
+convenience here: a tool for keeping family recordings should not require
+handing them to someone else's server.
+
+## Artefacts
+
+- Adapter: <https://huggingface.co/abhshkp/homespun-awadhi-lora> (8.7 MB)
+- Browser build: <https://huggingface.co/abhshkp/homespun-awadhi-web> (int8 ONNX)
+- Benchmark: `reports/benchmark.md`
+- Dataset card: `data/speedia/DATASET_CARD.md`
+
 ## Status
 
-Phase 1, corpus import. See `tasks/todo.md` for the task list and `tasks/plan.md`
-for architecture decisions, risks and open questions.
+Corpus, adapter, benchmark, storybook, narration and site are built. See
+`tasks/todo.md` for the task list and `tasks/plan.md` for architecture
+decisions, risks and open questions.
