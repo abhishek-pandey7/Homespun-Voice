@@ -121,11 +121,13 @@ function renderStory(story) {
   const root = document.getElementById("story");
   root.textContent = "";
 
+  // The page is called Homespun. The generated story title names the section,
+  // never the project; letting it win overwrote the masthead with whatever the
+  // planner happened to call the chapters that run.
   if (story.title) {
-    document.getElementById("title").textContent = story.title;
-    document.title = story.title;
+    const h = document.getElementById("story-title");
+    if (h) h.textContent = story.title;
   }
-  if (story.subtitle) document.getElementById("subtitle").textContent = story.subtitle;
 
   (story.chapters || []).forEach((chapter, index) => {
     const sec = el("section", "chapter reveal");
