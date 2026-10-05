@@ -91,3 +91,6 @@ desktop.ini
 # --- ONNX export artefacts (regenerated, hundreds of MB) ---
 models/homespun-merged/
 models/homespun-onnx/
+
+# Draft submission write-up, kept local
+SUBMISSION.md
