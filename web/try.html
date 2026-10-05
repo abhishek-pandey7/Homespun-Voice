@@ -48,10 +48,20 @@
     <div class="wrap">
       <h2 class="section-title">Your own voice</h2>
       <p class="section-note">
-        The model runs inside this page. Your audio is never uploaded, which is
-        the point: a tool for keeping family recordings should not require
-        handing them to someone else's server. The first run downloads about
-        250 MB and your browser keeps it cached.
+        The plan is for the model to run inside this page, so audio never leaves
+        your machine. The browser build does not work yet, and saying so is
+        cheaper than letting you find out: the quantised decoder I shipped is
+        broken on its cache branch, so it produces the first token and then
+        fails. The four worked examples below are real output from the same
+        adapter, run properly, and they are the demo until the browser build is
+        rebuilt.
+      </p>
+      <p class="section-note small">
+        Left in place rather than hidden, because the failure is diagnosed and
+        the fix is known: the two decoder graphs were quantised separately and
+        merged afterwards, which shrank the download from 739 MB to 186 MB and
+        produced an invalid graph. Merging first and quantising after keeps it
+        valid and keeps it large. That trade is the next piece of work.
       </p>
 
       <div class="live-controls">
