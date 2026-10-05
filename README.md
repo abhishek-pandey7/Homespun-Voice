@@ -51,7 +51,7 @@ settings, so the adapter is the only thing that differs.
 |---|---:|---:|
 | Words wrong | 0.9323 | **0.5853** |
 | Characters wrong | 0.6200 | **0.3357** |
-| Awadhi marker words kept | 5.1% | **45.3%** |
+| Awadhi marker words kept | 5.4% | **48.8%** |
 
 The last row is the one I care about. Those are the everyday Awadhi words a
 general model quietly deletes: `अहय` *(ahay, "is")*, `थय` *(thay, the past
