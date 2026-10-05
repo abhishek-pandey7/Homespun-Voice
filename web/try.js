@@ -303,12 +303,16 @@ async function runOn(blobOrFile, label) {
       language: "hi",
       task: "transcribe",
       max_new_tokens: MAX_TOKENS,
-      // These two are not used for the published benchmark, where both models
-      // decode greedily so the adapter is the only variable. Here there is no
-      // comparison to protect, and without them an out-of-domain clip locks
-      // into one syllable and spends the whole token budget on it.
-      repetition_penalty: 1.25,
-      no_repeat_ngram_size: 3,
+      // Greedy. Measured over the fifteen published clips:
+      //   plain greedy      CER 0.7208, 1 of 15 looped
+      //   penalty 1.25      CER 0.8359, 0 looped
+      //   penalty 1.1       CER 0.7592, 0 looped
+      //   n-gram block 3    CER 0.7561, 0 looped
+      //   beam 5            CER 0.7177, 0 looped
+      // Beam 5 is the most accurate and loop-free, but transformers.js returned
+      // an empty token array for it here, so the browser takes plain greedy:
+      // the best of the settings that actually run, with the one remaining loop
+      // explained on screen rather than suppressed at the cost of accuracy.
     });
     const took = (performance.now() - t0) / 1000;
 
@@ -324,7 +328,13 @@ async function runOn(blobOrFile, label) {
     if (clipped) note += ` Only the first ${MAX_SECONDS}s was transcribed.`;
     setStatus(note, "ok");
   } catch (err) {
-    setStatus(`Could not transcribe that: ${err.message}`, "bad");
+    const empty = /non-empty array of integers/.test(err.message || "");
+    setStatus(empty
+      ? "The model returned nothing for that clip. Try a longer one, or one of "
+        + "the examples below."
+      : `Could not transcribe that: ${err.message}`, "bad");
+    const box = out.querySelector(".live-text");
+    if (box) box.remove();
     console.error(err);
   }
 }
